@@ -1,0 +1,30 @@
+github:
+  # Your github access token
+  access_token: 1234567890abcdefghijklmnopqrstuvwxyz
+  # The label that denotes an issue/pr as a proposal
+  proposal_label: proposal
+  # The repository that holds the proposals
+  repo: matrix-org/matrix-doc
+
+webhook:
+  # Your webhook secret that was given to github
+  secret: zyxwvutsrqponmlkjihgfedcba0987654321
+
+database:
+  # The path to a postgres database
+  postgres_path: "postgres://mscbot:somethingsecure@localhost/mscbot?sslmode=disable"
+
+logging:
+  # Max logging level
+  # Allowed levels are 'INFO', 'WARNING', 'ERROR', 'DEBUG' where DEBUG is the most verbose
+  level: INFO
+  # Configure logging to a file
+  file_logging:
+    # Whether logging to a file is enabled
+    enabled: false
+    # The path to the file to log to. May be absolute or relative
+    filepath: mscbot.log
+  # Configure logging to the console output
+  console_logging:
+    # Whether logging to the console is enabled
+    enabled: true
