@@ -35,7 +35,6 @@ class Storage(object):
         self.conn = psycopg2.connect(db_path)
         self.cur = self.conn.cursor()
 
-        # Check if we need to perform a migration
         try:
             self.cur.execute("SELECT current FROM migrations")
 
@@ -83,21 +82,67 @@ class Storage(object):
         """)
 
         self.cur.execute("""
-            ALTER TABLE proposal ADD CONSTRAINT proposal_num UNIQUE (numj
+            CREATE UNIQUE INDEX proposal_num ON proposal (num)
         """)
 
         # Bot comment table #
 
         # Comments made by the bot
         self.cur.execute("""
-            CREATE TABLE bot_comment (
+            CREATE TABLE comment (
                 id INTEGER PRIMARY KEY,
-                proposal_num TEXT NOT NULL
+                author TEXT NOT NULL,
+                proposal_num TEXT NOT NULL,
+                command TEXT NOT NULL
             )
         """)
 
         self.cur.execute("""
-            CREATE UNIQUE INDEX bot_comment_id ON bot_comment (id)
+            CREATE UNIQUE INDEX comment_id ON comment (id)
+        """)
+
+        # FCP proposal table #
+
+        # Current FCP proposals
+        self.cur.execute("""
+            CREATE TABLE fcp_proposal (
+                proposal_num TEXT PRIMARY KEY,
+                initiator TEXT NOT NULL,
+            )
+        """)
+
+        self.cur.execute("""
+            CREATE UNIQUE INDEX fcp_proposal_proposal_num ON fcp_proposal (proposal_num)
+        """)
+
+        # FCP proposal progress table #
+
+        # Who has and has not ticked
+        self.cur.execute("""
+            CREATE TABLE fcp_proposal_progress (
+                proposal_num TEXT NOT NULL,
+                ticked_by TEXT NOT NULL,
+            )
+        """)
+
+        self.cur.execute("""
+            CREATE UNIQUE INDEX fcp_proposal_progress_proposal_num_ticked_by ON 
+            fcp_proposal_progress (proposal_num, ticked_by)
+        """)
+
+        # FCP proposal concern table #
+
+        # Current concerns per FCP proposal
+        self.cur.execute("""
+            CREATE TABLE fcp_proposal_concern (
+                proposal_num TEXT NOT NULL,
+                author TEXT NOT NULL,
+                concern TEXT NOT NULL,
+            )
+        """)
+
+        self.cur.execute("""
+            CREATE INDEX fcp_proposal_proposal_num ON fcp_proposal (proposal_num)
         """)
 
         # Team table #
@@ -134,5 +179,3 @@ class Storage(object):
 
         log.info("Database setup complete")
 
-    def _run_migrations(self, current_migration: int):
-        pass

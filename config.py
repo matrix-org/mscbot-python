@@ -17,7 +17,10 @@ import logging
 import os
 import yaml
 import sys
+from typing import Optional
 from errors import ConfigError
+from github.Team import Team
+from github.Organization import Organization
 
 logger = logging.getLogger()
 
@@ -28,6 +31,9 @@ class Config(object):
         Args:
             filepath (str): Path to config file
         """
+        self.github_team = None  # type: Optional[Team]
+        self.github_org = None  # type: Optional[Organization]
+
         if not os.path.isfile(filepath):
             raise ConfigError(f"Config file '{filepath}' does not exist")
 
@@ -64,15 +70,40 @@ class Config(object):
         self.database_filepath = database_dict.get("postgres_path")
 
         # Github setup
+        self.github_user = None  # Set later once we connect to github successfully
+
         github = config.get("github", {})
         self.github_access_token = github.get("access_token")
         if not self.github_access_token:
             raise ConfigError("github.access_token is required")
 
-        self.github_proposal_label = github.get("proposal_label")
-        if not self.github_proposal_label:
-            raise ConfigError("github.proposal_label is required")
-
         self.github_repo = github.get("repo")
         if not self.github_repo:
             raise ConfigError("github.repo is required")
+
+        self.github_proposal_label = github.get("proposal_label")
+        if not self.github_proposal_label:
+            raise ConfigError("github.proposal_label is required")
+        self.github_fcp_proposed_label = github.get("fcp_proposed_label")
+        if not self.github_fcp_proposed_label:
+            raise ConfigError("github.fcp_proposed_label is required")
+        self.github_fcp_label = github.get("fcp_label")
+        if not self.github_fcp_label:
+            raise ConfigError("github.fcp_label is required")
+
+        self.github_fcp_proposal_template_path = github.get("fcp_proposal_template_path")
+        if not self.github_fcp_proposal_template_path:
+            raise ConfigError("github.fcp_proposal_template_path is required")
+
+        self.github_org_name = github.get("org")
+        if not self.github_org_name:
+            raise ConfigError("github.org is required")
+        self.github_team_name = github.get("team")
+        if not self.github_team_name:
+            raise ConfigError("github.team is required")
+
+        # Webhook setup
+        webhook = config.get("webhook", {})
+        self.webhook_host = webhook.get("host", "0.0.0.0")
+        self.webhook_port = webhook.get("port", 5050)
+        self.webhook_secret = webhook.get("secret")

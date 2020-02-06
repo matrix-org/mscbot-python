@@ -26,6 +26,9 @@ setup(
         "PyGithub>=1.45",
         "PyYAML>=5.3",
         "psycopg2>=2.8.4",
+        "github-webhook>=1.0.3",
+        "waitress>=1.4.3",
+        "jinja2>=2.11.1",
     ],
     classifiers=[
         'License :: OSI Approved :: Apache Software License',

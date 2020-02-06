@@ -3,10 +3,24 @@ github:
   access_token: 1234567890abcdefghijklmnopqrstuvwxyz
   # The label that denotes an issue/pr as a proposal
   proposal_label: proposal
+  # The label that denotes an issue/pr with fcp proposed
+  fcp_proposed_label: proposed-final-comment-period
+  # The label that denotes an issue/pr as in fcp
+  fcp_label: final-comment-period
   # The repository that holds the proposals
   repo: matrix-org/matrix-doc
+  # Organization containing the proposal team
+  org: matrix-org
+  # Team name whose members have the power to influence proposals
+  name: spec-core-team
+  # Path to a jinja2 template for the text that the bot will post when an FCP is proposed
+  fcp_proposal_template_path: comment_templates/fcp_proposal.j2
 
 webhook:
+  # Address to listen on
+  host: 0.0.0.0
+  # Port to listen on
+  port: 5050
   # Your webhook secret that was given to github
   secret: zyxwvutsrqponmlkjihgfedcba0987654321
 

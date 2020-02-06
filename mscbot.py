@@ -26,14 +26,13 @@
 # Webhook API to update state of things
 
 # Post comments when necessary
-
-
 from github import Github
 from github_scraper import GithubScraper
 import logging
 
 from config import Config
 from storage import Storage
+from webhook import WebhookHandler
 
 log = logging.getLogger(__name__)
 
@@ -43,7 +42,8 @@ def main():
     config = Config("config.yaml")
 
     # Configure the database
-    store = Storage(config.database_filepath)
+    #store = Storage(config.database_filepath)
+    store = None
 
     # Log into github with provided access token
     github = Github(config.github_access_token)
@@ -51,20 +51,35 @@ def main():
         log.fatal("Unable to connect to github")
         return
 
+    # Connect to the configured repository
     repo = github.get_repo(config.github_repo)
     if not repo:
-        log.fatal(f"Unable to connect to github repo {config.github_repo}")
+        log.fatal(f"Unable to connect to github repo '{config.github_repo}'")
         return
+
+    # Get the user object of the bot
+    config.github_user = github.get_user()
+    if not config.github_user:
+        log.fatal("Unable to download our own github user information")
+        return
+
+    # Get the proposal team object
+    config.github_org = github.get_organization(config.github_org_name)
+    if not config.github_org:
+        log.fatal(f"Unable to find Github org '{config.github_org_name}'")
+    config.github_team = config.github_org.get_team(config.github_team_name)
+    if not config.github_team:
+        log.fatal(f"Unable to find Github team '{config.github_team_name}'")
 
     # Scrape all the current information off github
     scraper = GithubScraper(config, store, github, repo)
-    scraper.scrape()
-
-
+    #scraper.scrape()
 
     # Create a webhook handler
-    # Separate script to scrape before the initial run?
-    # Could run if database isn't populated yet?
+    webhook_handler = WebhookHandler(store, config, github, repo)
+
+    # Start accepting webhooks
+    webhook_handler.run()
 
 
 if __name__ == "__main__":
