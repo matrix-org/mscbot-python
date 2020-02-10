@@ -41,10 +41,6 @@ def main():
     # Read the config file
     config = Config("config.yaml")
 
-    # Configure the database
-    #store = Storage(config.database_filepath)
-    store = None
-
     # Log into github with provided access token
     github = Github(config.github_access_token)
     if not github:
@@ -72,11 +68,11 @@ def main():
         log.fatal(f"Unable to find Github team '{config.github_team_name}'")
 
     # Scrape all the current information off github
-    scraper = GithubScraper(config, store, github, repo)
+    #scraper = GithubScraper(config, store, github, repo)
     #scraper.scrape()
 
     # Create a webhook handler
-    webhook_handler = WebhookHandler(store, config, github, repo)
+    webhook_handler = WebhookHandler(config, github, repo)
 
     # Start accepting webhooks
     webhook_handler.run()

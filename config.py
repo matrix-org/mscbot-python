@@ -17,7 +17,7 @@ import logging
 import os
 import yaml
 import sys
-from typing import Optional
+from typing import Optional, Any, List
 from errors import ConfigError
 from github.Team import Team
 from github.Organization import Organization
@@ -39,71 +39,107 @@ class Config(object):
 
         # Load in the config file at the given filepath
         with open(filepath) as file_stream:
-            config = yaml.safe_load(file_stream)
+            self.config = yaml.safe_load(file_stream)
 
         # Logging setup
         formatter = logging.Formatter(
             '%(asctime)s | %(name)s [%(levelname)s] %(message)s'
         )
 
-        log_dict = config.get("logging", {})
-        log_level = log_dict.get("level", "INFO")
+        log_level = self._get_config_item(["logging", "level"], "INFO")
         logger.setLevel(log_level)
 
-        file_logging = log_dict.get("file_logging", {})
-        file_logging_enabled = file_logging.get("enabled", False)
-        file_logging_filepath = file_logging.get("filepath", "bot.log")
+        file_logging_enabled = self._get_config_item(
+            ["logging", "file_logging"], "enabled", False
+        )
         if file_logging_enabled:
+            file_logging_filepath = self._get_config_item(
+                ["logging", "file_logging", "filepath"], "bot.log"
+            )
             handler = logging.FileHandler(file_logging_filepath)
             handler.setFormatter(formatter)
             logger.addHandler(handler)
 
-        console_logging = log_dict.get("console_logging", {})
-        console_logging_enabled = console_logging.get("enabled", True)
+        console_logging_enabled = self._get_config_item(
+            ["logging", "console_logging", "enabled"], True
+        )
         if console_logging_enabled:
             handler = logging.StreamHandler(sys.stdout)
             handler.setFormatter(formatter)
             logger.addHandler(handler)
 
-        # Database setup
-        database_dict = config.get("database", {})
-        self.database_filepath = database_dict.get("postgres_path")
-
         # Github setup
         self.github_user = None  # Set later once we connect to github successfully
 
-        github = config.get("github", {})
-        self.github_access_token = github.get("access_token")
-        if not self.github_access_token:
-            raise ConfigError("github.access_token is required")
+        self.github_access_token = self._get_config_item(
+            ["github", "access_token"]
+        )
 
-        self.github_repo = github.get("repo")
-        if not self.github_repo:
-            raise ConfigError("github.repo is required")
+        self.github_repo = self._get_config_item(["github", "repo"])
 
-        self.github_proposal_label = github.get("proposal_label")
-        if not self.github_proposal_label:
-            raise ConfigError("github.proposal_label is required")
-        self.github_fcp_proposed_label = github.get("fcp_proposed_label")
-        if not self.github_fcp_proposed_label:
-            raise ConfigError("github.fcp_proposed_label is required")
-        self.github_fcp_label = github.get("fcp_label")
-        if not self.github_fcp_label:
-            raise ConfigError("github.fcp_label is required")
+        # Github labels
+        self.github_proposal_label = self._get_config_item(
+            ["github", "labels", "proposal"]
+        )
+        self.github_fcp_label = self._get_config_item(
+            ["github", "labels", "fcp"]
+        )
+        self.github_fcp_proposed_label = self._get_config_item(
+            ["github", "labels", "fcp_proposed"]
+        )
+        self.github_disposition_merge_label = self._get_config_item(
+            ["github", "labels", "disposition_merge"]
+        )
+        self.github_disposition_close_label = self._get_config_item(
+            ["github", "labels", "disposition_close"]
+        )
+        self.github_disposition_postpone_label = self._get_config_item(
+            ["github", "labels", "disposition_postpone"]
+        )
 
-        self.github_fcp_proposal_template_path = github.get("fcp_proposal_template_path")
-        if not self.github_fcp_proposal_template_path:
-            raise ConfigError("github.fcp_proposal_template_path is required")
+        self.github_fcp_proposal_template_path = self._get_config_item(
+            ["github", "fcp_proposal_template_path"]
+        )
 
-        self.github_org_name = github.get("org")
-        if not self.github_org_name:
-            raise ConfigError("github.org is required")
-        self.github_team_name = github.get("team")
-        if not self.github_team_name:
-            raise ConfigError("github.team is required")
+        self.github_org_name = self._get_config_item(["github", "org"])
+        self.github_team_name = self._get_config_item(["github", "team"])
 
         # Webhook setup
-        webhook = config.get("webhook", {})
-        self.webhook_host = webhook.get("host", "0.0.0.0")
-        self.webhook_port = webhook.get("port", 5050)
-        self.webhook_secret = webhook.get("secret")
+        self.webhook_host = self._get_config_item(["webhook", "host"], "0.0.0.0")
+        self.webhook_port = self._get_config_item(["webhook", "port"], 5050)
+        self.webhook_secret = self._get_config_item(["webhook", "secret"], required=False)
+
+    def _get_config_item(
+            self,
+            path: List[str],
+            default: Any = None,
+            required: bool = True,
+    ) -> Any:
+        """Get a config option from a path and option name, specifying whether it is
+        required.
+
+        Raises:
+            ConfigError: If required is specified and the object is not found
+                (and there is no default value provided), this error will be raised
+        """
+        option_name = path.pop(-1)
+
+        path_str = '.'.join(path)
+
+        # Sift through the config dicts specified by `path` to get the one containing
+        # our option
+        config_dict = self.config
+        for name in path:
+            config_dict = config_dict.get(name)
+            if not config_dict:
+                if required:
+                    raise ConfigError(f"Config option {path_str} is required")
+                else:
+                    config_dict = {}
+
+        # Retrieve the option
+        option = config_dict.get(option_name, default)
+        if required and not option:
+            raise ConfigError(f"Config option {path_str} is required")
+
+        return option

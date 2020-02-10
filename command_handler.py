@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
+import re
 from jinja2 import Template
 from typing import Dict, Tuple, List, Optional
 from config import Config
@@ -26,8 +27,7 @@ log = logging.getLogger(__name__)
 class CommandHandler(object):
     """Processes and handles issue comments that contain commands"""
 
-    def __init__(self, store: Storage, config: Config, repo: Repository):
-        self.store = store
+    def __init__(self, config: Config, repo: Repository):
         self.config = config
         self.repo = repo
         self.COMMANDS = {
@@ -42,6 +42,7 @@ class CommandHandler(object):
         self.proposal = None
         self.comment = None
         self.proposal_labels = []
+        self.team_vote_regex = re.compile("^- \[x\] @(.+)$", re.IGNORECASE)
 
     def handle_comment(self, comment: Dict):
         # Check for any commands
@@ -141,11 +142,14 @@ class CommandHandler(object):
                                "cancel the current one first.")
             return
 
+        # Retrieve all comments for this proposal
+        comments = [c for c in self.proposal.get_comments()]
+
         # Calculate team_votes content
-        team_votes = self._get_team_votes()
+        team_votes = self._get_team_votes(comments)
 
         # Calculate concern content
-        concerns = self._get_concerns()
+        concerns = self._get_concerns(comments)
         concern_text = self._format_concerns(concerns)
 
         comment_text = self.github_fcp_proposal_template.render(
@@ -169,20 +173,47 @@ class CommandHandler(object):
         # Remove the proposal label
         self.proposal_labels.remove(self.config.github_fcp_proposed_label)
 
-    def _get_team_votes(self) -> str:
+    def _get_team_votes(self, comments: List[IssueComment]) -> str:
+        """Retrieve the votes for the current FCP proposal"""
         # Iterate through all comments of the proposal
-        comments = [c for c in self.proposal.get_comments()]
-
         # Check for an existing status comment
         # Is FCP currently proposed?
+        if self.config.github_fcp_proposed_label in self.proposal_labels:
+            # Find the latest status comment
+            existing_status_comment = None
+            for comment in reversed(comments):
+                if comment.body.startswith("Team member @"):
+                    existing_status_comment = comment
+                    break
+
+            if not existing_status_comment:
+                return "Could not retrieve team vote count"
+
+            # Retrieve existing team votes
+            team_votes = self._parse_team_votes_from_comment(existing_status_comment)
+        else:
+
+
         # Has it been proposed before? If FCP proposed label was removed before,
         # only get comments since then
-        for comment in reversed(comments):
-            if comment
 
+    def _parse_team_votes_from_comment(self, comment: IssueComment) -> List[str]:
+        """Retrieves the users who have currently voted for FCP using the body of a
+        given comment and cross-references them with the members of the github team
 
+        Returns:
+            A list of github usernames which have voted
+        """
+        voted_members = []
+        for line in comment.body.split("\n"):
+            match = self.team_vote_regex.match(line)
+            if match:
+                member = match.group(1)
+                voted_members.append(member)
 
-    def _get_concerns(self) -> List[Tuple[str, bool]]:
+        return voted_members
+
+    def _get_concerns(self, comments: List[IssueComment]) -> List[Tuple[str, bool]]:
         """Retrieve a list of any concerns on this proposal
 
         Returns:
@@ -216,13 +247,6 @@ class CommandHandler(object):
             text = text % concern
 
         return text
-
-    def _parse_status_comment(self, comment: Dict) -> Dict:
-        """Process a status comment and return parsed information"""
-        # Get team votes as a dict
-        # Get concerns as a list
-        # Get person who started the FCP
-        pass
 
     def _attempt_to_cancel_fcp_on_proposal(self) -> bool:
         """Attempt to cancel FCP on a proposal specified by its number

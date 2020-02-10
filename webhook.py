@@ -26,12 +26,11 @@ log = logging.getLogger(__name__)
 
 
 class WebhookHandler(object):
-    def __init__(self, store: Storage, config: Config, github: Github, repo: Repository):
-        self.store = store
+    def __init__(self, config: Config, github: Github, repo: Repository):
         self.config = config
         self.github = github
         self.repo = repo
-        self.command_handler = CommandHandler(store, config, repo)
+        self.command_handler = CommandHandler(config, repo)
 
         # Start a flash webserver
         self.app = Flask(__name__)

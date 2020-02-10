@@ -1,13 +1,20 @@
 github:
   # Your github access token
   access_token: 1234567890abcdefghijklmnopqrstuvwxyz
+  labels:
+    # Denotes an issue/pr as a proposal
+    proposal: proposal
+    # The label that denotes an issue/pr as in fcp
+    fcp: final-comment-period
+    # Denotes an issue/pr as fcp proposed
+    fcp_proposed: proposed-final-comment-period
+    # Denotes an issue/pr as fcp proposed with a disposition of merge
+    fcp_proposed_disposition_merge: disposition-merge
+    # Denotes an issue/pr as fcp proposed with a disposition of close
+    fcp_proposed_disposition_close: disposition-close
+    # Denotes an issue/pr as fcp proposed with a disposition of postpone
+    fcp_proposed_disposition_postpone: disposition-postpone
   # The label that denotes an issue/pr as a proposal
-  proposal_label: proposal
-  # The label that denotes an issue/pr with fcp proposed
-  fcp_proposed_label: proposed-final-comment-period
-  # The label that denotes an issue/pr as in fcp
-  fcp_label: final-comment-period
-  # The repository that holds the proposals
   repo: matrix-org/matrix-doc
   # Organization containing the proposal team
   org: matrix-org
