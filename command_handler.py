@@ -16,7 +16,6 @@ from jinja2 import Template
 from typing import Dict, Tuple, List, Optional
 from config import Config
 from storage import Storage
-from github.Issue import Issue
 from github.IssueComment import IssueComment
 from github.Label import Label
 from github.Repository import Repository
@@ -96,7 +95,7 @@ class CommandHandler(object):
 
         if disposition == "cancel":
             # Check that this proposal is in FCP
-            if not self._is_proposal_in_fcp():
+            if not self.config.github_fcp_label in self.proposal_labels:
                 self._post_comment(
                     "This proposal is not in FCP."
                 )
@@ -142,22 +141,21 @@ class CommandHandler(object):
                                "cancel the current one first.")
             return
 
-        # Ensure this proposal is not already in proposed FCP
-
         # Calculate team_votes content
+        team_votes = self._get_team_votes()
 
         # Calculate concern content
-        concerns = self._get_concerns_for_proposal()
+        concerns = self._get_concerns()
         concern_text = self._format_concerns(concerns)
 
         comment_text = self.github_fcp_proposal_template.render(
-            comment_author=comment_author,
+            comment_author=self.comment["sender"]["login"],
             disposition=disposition,
             team_votes=team_votes,
-            concerns=concerns,
+            concerns=concern_text,
         )
 
-        self._post_comment(proposal, comment_text)
+        self._post_comment(comment_text)
 
         # Add the relevant label
         label_to_add = None  # type: Optional[Label]
@@ -169,9 +167,22 @@ class CommandHandler(object):
             pass
 
         # Remove the proposal label
-        proposal.remove_from_labels(# Get label obj)
+        self.proposal_labels.remove(self.config.github_fcp_proposed_label)
 
-    def _get_concerns_for_proposal(self, proposal: Issue) -> List[Tuple[str, bool]]:
+    def _get_team_votes(self) -> str:
+        # Iterate through all comments of the proposal
+        comments = [c for c in self.proposal.get_comments()]
+
+        # Check for an existing status comment
+        # Is FCP currently proposed?
+        # Has it been proposed before? If FCP proposed label was removed before,
+        # only get comments since then
+        for comment in reversed(comments):
+            if comment
+
+
+
+    def _get_concerns(self) -> List[Tuple[str, bool]]:
         """Retrieve a list of any concerns on this proposal
 
         Returns:
@@ -213,34 +224,17 @@ class CommandHandler(object):
         # Get person who started the FCP
         pass
 
-    def _is_proposal_in_fcp_proposed(self, proposal: Issue) -> bool:
-        """Return whether a proposal is in FCP-proposed by checking for the
-        appropriate label
-        """
-        for label in proposal.get_labels():
-            if self.config.github_fcp_proposed_label == label["name"]:
-                return True
-
-        return False
-
-    def _is_proposal_in_fcp(self, proposal: Issue) -> bool:
-        """Return whether a proposal is in FCP by checking for the
-        appropriate label
-        """
-        for label in proposal["labels"]:
-            if self.config.github_fcp_label == label["name"]:
-                return True
-
-        return False
-
-    def _attempt_to_cancel_fcp_on_proposal(self, proposal: Dict) -> bool:
+    def _attempt_to_cancel_fcp_on_proposal(self) -> bool:
         """Attempt to cancel FCP on a proposal specified by its number
 
         Returns:
             Whether the cancellation was successful
         """
-        if not self._is_proposal_in_fcp(proposal):
+        if not self.config.github_fcp_label in self.proposal_labels:
             self._post_comment("This proposal is not in FCP.")
+
+        # TODO
+        return True
 
     # TODO: Abstract into the github_bot class
     def _post_or_update_status_comment(self, comment: Dict, text: str):
