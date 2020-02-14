@@ -13,10 +13,10 @@
 # limitations under the License.
 import logging
 import json
-from typing import Dict, List
-from storage import Storage
+from typing import Dict
 from github import Github
 from github.Repository import Repository
+from github.Issue import Issue
 from config import Config
 from command_handler import CommandHandler
 from github_webhook import Webhook
@@ -26,7 +26,12 @@ log = logging.getLogger(__name__)
 
 
 class WebhookHandler(object):
-    def __init__(self, config: Config, github: Github, repo: Repository):
+    def __init__(
+        self,
+        config: Config,
+        github: Github,
+        repo: Repository,
+    ):
         self.config = config
         self.github = github
         self.repo = repo
@@ -34,6 +39,7 @@ class WebhookHandler(object):
 
         # Start a flash webserver
         self.app = Flask(__name__)
+
         # TODO: Figure out webhook secret
         webhook = Webhook(self.app, endpoint="/webhook")
 
@@ -54,16 +60,19 @@ class WebhookHandler(object):
         comment_author = comment["sender"]
         comment_author_login = comment_author["login"]
 
-        # Ignore comments from ourselves
+        # Ignore comments/edits from ourselves
         if comment_author_login == self.config.github_user.login:
+            log.debug("Ignoring comment from ourselves")
             return
 
         # Is this a proposal?
         if not self._issue_has_label(comment["issue"], self.config.github_proposal_label):
+            log.debug("Ignoring comment without appropriate proposal label")
             return
 
         # Ignore comments from people who aren't on the team
         if not self._comment_belongs_to_team_member(comment):
+            log.debug("Ignoring comment that doesn't belong to team member")
             return
 
         # Process any commands this comment contains
@@ -85,4 +94,3 @@ class WebhookHandler(object):
                 return True
 
         return False
-

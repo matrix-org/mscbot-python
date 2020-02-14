@@ -22,7 +22,7 @@ from errors import ConfigError
 from github.Team import Team
 from github.Organization import Organization
 
-logger = logging.getLogger()
+log = logging.getLogger()
 
 
 class Config(object):
@@ -47,7 +47,7 @@ class Config(object):
         )
 
         log_level = self._get_config_item(["logging", "level"], "INFO")
-        logger.setLevel(log_level)
+        log.setLevel(log_level)
 
         file_logging_enabled = self._get_config_item(
             ["logging", "file_logging"], "enabled", False
@@ -58,7 +58,7 @@ class Config(object):
             )
             handler = logging.FileHandler(file_logging_filepath)
             handler.setFormatter(formatter)
-            logger.addHandler(handler)
+            log.addHandler(handler)
 
         console_logging_enabled = self._get_config_item(
             ["logging", "console_logging", "enabled"], True
@@ -66,7 +66,7 @@ class Config(object):
         if console_logging_enabled:
             handler = logging.StreamHandler(sys.stdout)
             handler.setFormatter(formatter)
-            logger.addHandler(handler)
+            log.addHandler(handler)
 
         # Github setup
         self.github_user = None  # Set later once we connect to github successfully
@@ -104,6 +104,12 @@ class Config(object):
         self.github_org_name = self._get_config_item(["github", "org"])
         self.github_team_name = self._get_config_item(["github", "team"])
 
+        # FCP information
+        self.fcp_time_days = self._get_config_item(["fcp", "time_days"], required=False)
+        self.fcp_timer_json_filepath = self._get_config_item(
+            ["fcp", "timer_json_filepath"]
+        )
+
         # Webhook setup
         self.webhook_host = self._get_config_item(["webhook", "host"], "0.0.0.0")
         self.webhook_port = self._get_config_item(["webhook", "port"], 5050)
@@ -140,6 +146,7 @@ class Config(object):
         # Retrieve the option
         option = config_dict.get(option_name, default)
         if required and not option:
-            raise ConfigError(f"Config option {path_str} is required")
+            raise ConfigError(f"Config option {path_str+'.'+option_name} is required")
 
         return option
+

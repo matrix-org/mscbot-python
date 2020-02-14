@@ -3,3 +3,5 @@ config.yaml
 .idea/
 __pycache__/
 mscbot.egg-info/
+*.log
+*.json

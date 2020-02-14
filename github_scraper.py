@@ -22,7 +22,7 @@ from github.Issue import Issue
 from github.IssueComment import IssueComment
 from github.GithubException import UnknownObjectException
 from config import Config
-from bot_commands import BotCommands
+from command_handler import CommandHandler
 
 log = logging.getLogger(__name__)
 
@@ -123,7 +123,7 @@ class GithubScraper(object):
                 """)
         else:
             # Extract any commands from the comment
-            commands = BotCommands.parse_commands_from_text(comment.body)
+            commands = CommandHandler.parse_commands_from_text(comment.body)
 
             # Act on any concern commands
             for command in commands:

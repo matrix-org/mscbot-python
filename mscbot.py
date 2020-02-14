@@ -13,25 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Download all the issues/prs with [proposal] tag
-
-# Figure out their current state
-
-# Find the MSCBot comments of the relevant ones
-
-# Figure out their current MSCBot state
-
-# ---
-
-# Webhook API to update state of things
-
-# Post comments when necessary
 from github import Github
-from github_scraper import GithubScraper
+from github.GithubException import UnknownObjectException
 import logging
 
+from fcp_timers import FCPTimers
 from config import Config
-from storage import Storage
 from webhook import WebhookHandler
 
 log = logging.getLogger(__name__)
@@ -60,16 +47,19 @@ def main():
         return
 
     # Get the proposal team object
-    config.github_org = github.get_organization(config.github_org_name)
-    if not config.github_org:
+    try:
+        config.github_org = github.get_organization(config.github_org_name)
+    except UnknownObjectException:
         log.fatal(f"Unable to find Github org '{config.github_org_name}'")
-    config.github_team = config.github_org.get_team(config.github_team_name)
-    if not config.github_team:
-        log.fatal(f"Unable to find Github team '{config.github_team_name}'")
+        return
 
-    # Scrape all the current information off github
-    #scraper = GithubScraper(config, store, github, repo)
-    #scraper.scrape()
+    try:
+        config.github_team = config.github_org.get_team_by_slug(config.github_team_name)
+    except UnknownObjectException:
+        log.fatal(f"Unable to find or access Github team '{config.github_team_name}'. "
+                  f"Make sure your bot is part of the team and has the read:org "
+                  f"permission")
+        return
 
     # Create a webhook handler
     webhook_handler = WebhookHandler(config, github, repo)

@@ -9,19 +9,25 @@ github:
     # Denotes an issue/pr as fcp proposed
     fcp_proposed: proposed-final-comment-period
     # Denotes an issue/pr as fcp proposed with a disposition of merge
-    fcp_proposed_disposition_merge: disposition-merge
+    disposition_merge: disposition-merge
     # Denotes an issue/pr as fcp proposed with a disposition of close
-    fcp_proposed_disposition_close: disposition-close
+    disposition_close: disposition-close
     # Denotes an issue/pr as fcp proposed with a disposition of postpone
-    fcp_proposed_disposition_postpone: disposition-postpone
+    disposition_postpone: disposition-postpone
   # The label that denotes an issue/pr as a proposal
   repo: matrix-org/matrix-doc
   # Organization containing the proposal team
   org: matrix-org
   # Team name whose members have the power to influence proposals
-  name: spec-core-team
+  team: spec-core-team
   # Path to a jinja2 template for the text that the bot will post when an FCP is proposed
   fcp_proposal_template_path: comment_templates/fcp_proposal.j2
+
+fcp:
+  # Length of a final comment in days
+  time_days: 5
+  # Path to a JSON file storing FCP timer information
+  timer_json_filepath: timers.json
 
 webhook:
   # Address to listen on

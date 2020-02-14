@@ -29,6 +29,7 @@ setup(
         "github-webhook>=1.0.3",
         "waitress>=1.4.3",
         "jinja2>=2.11.1",
+        "APScheduler>=3.6.3",
     ],
     classifiers=[
         'License :: OSI Approved :: Apache Software License',
