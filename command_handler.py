@@ -43,6 +43,7 @@ class CommandHandler(object):
         self.comment = None
         self.proposal_labels_str = []
         self.team_vote_regex = re.compile(r"^- \[x\] @(.+)$", re.IGNORECASE)
+        self.resolved_concern_regex = re.compile(r"^\* ~~(.+)~~.*")
 
         # Set up FCP timer handler, and callback functions
         self.fcp_timers = FCPTimers(
@@ -92,11 +93,15 @@ class CommandHandler(object):
             A list of tuples containing (command name, list of command parameters)
         """
         commands = []
-        lines = text.split("\\n")
+        lines = text.split("\n")
 
         # Read each line of the comment and check if it starts with @<botname>
         for line in lines:
             words = line.split()
+            if not words:
+                # Account for empty lines
+                continue
+
             first_word = words.pop(0)
             if first_word == "@" + self.config.github_user.login:
                 command = words[0]
@@ -142,12 +147,86 @@ class CommandHandler(object):
         self,
         parameters: List[str]
     ):
-        """Raise a concern on an in-FCP proposal"""
-        pass
+        """Add a concern to the existing status comment"""
+        # Get the existing status comment
+        status_comment = self._get_status_comment()
+
+        if not status_comment:
+            self._post_comment("Unable to add concern. Is this msc in "
+                               "FCP-proposed state?")
+
+        # Add concern to status comment
+        concern_text = ' '.join(parameters)
+        log.info("concern_text: %s", concern_text)
+        self._add_concern_to_status_comment(status_comment, concern_text)
 
     def _command_resolve(self, parameters: List[str]):
         """Resolve an existing concern on an in-FCP proposal"""
-        pass
+        # Get the existing status comment
+        status_comment = self._get_status_comment()
+
+        if not status_comment:
+            self._post_comment("Unable to resolve concern. Is this msc in "
+                               "FCP-proposed state?")
+
+        # Resolve concern on status comment
+        concern_text = ' '.join(parameters)
+        self._resolve_concern_on_status_comment(status_comment, concern_text)
+
+    def _add_concern_to_status_comment(
+        self,
+        status_comment: IssueComment,
+        concern_text: str,
+    ):
+        """Add a concern to an existing status comment if it doesn't already exist"""
+        # Get the current concerns
+        concerns = self._parse_concerns_from_status_comment_body(status_comment.body)
+
+        # Check that this concern hasn't already been raised
+        for text, resolved in concerns:
+            if concern_text == text:
+                self._post_comment("That concern has already been raised")
+                return
+
+        # Add this concern as unresolved
+        concerns.append((concern_text, False))
+        log.info("appending: %s", concerns[-1])
+
+        # Update the status comment
+        self._post_or_update_status_comment(
+            concerns=concerns,
+            existing_status_comment=status_comment
+        )
+
+    def _resolve_concern_on_status_comment(
+        self,
+        status_comment: IssueComment,
+        concern_text: str,
+    ):
+        """Resolves a concern on a status comment"""
+        # Get the current concerns
+        concerns = self._parse_concerns_from_status_comment_body(status_comment.body)
+
+        # Check that this concern exists
+        concern_index = -1
+        for index, concern in enumerate(concerns):
+            text, resolved = concern
+            if concern_text == text:
+                concern_index = index
+
+        if concern_index == -1:
+            # We didn't find the concern
+            self._post_comment(f"Unknown concern '{concern_text}'.")
+            return
+
+        # Mark this concern as resolved
+        concerns[concern_index] = (concern_text, True)
+
+        # Update the status comment
+        self._post_or_update_status_comment(
+            concerns=concerns,
+            existing_status_comment=status_comment,
+        )
 
     def _fcp_proposal_with_disposition(self, disposition: str):
         """Propose an FCP with a given disposition"""
@@ -162,16 +241,12 @@ class CommandHandler(object):
                                "cancel the current one first.")
             return
 
-        # Calculate team_votes content
-        team_votes = self._format_team_votes(self.comment["sender"]["login"])
-
-        comment_text = self.github_fcp_proposal_template.render(
-            comment_author=self.comment["sender"]["login"],
+        # Post new status comment
+        self._post_or_update_status_comment(
+            voted_members=[self.comment["sender"]["login"]],
+            concerns=[],
             disposition=disposition,
-            team_votes=team_votes,
         )
-
-        self._post_comment(comment_text)
 
         # Add the relevant label
         if disposition == "merge":
@@ -190,7 +265,11 @@ class CommandHandler(object):
         """
         log.debug("Processing status comment edit...")
 
-        num_team_votes = len(self._parse_team_votes_from_comment(self.comment))
+        num_team_votes = len(
+            self._parse_team_votes_from_status_comment_body(
+                self.comment["comment"]["body"]
+            )
+        )
         num_team_members = len([m for m in self.config.github_team.get_members()])
         
         # Check if more than 75% of people have voted
@@ -224,30 +303,30 @@ class CommandHandler(object):
         # Remove the FCP proposal label
         self.proposal_labels_str.remove(self.config.github_fcp_proposed_label)
 
-    def _get_team_votes(self, comments: List[IssueComment]) -> str:
-        """Retrieve the votes for the current FCP proposal"""
-        # Iterate through all comments of the proposal
-        # Check for an existing status comment
-        # Is FCP currently proposed?
-        if self.config.github_fcp_proposed_label in self.proposal_labels_str:
-            # Find the latest status comment
-            existing_status_comment = None
-            for comment in reversed(comments):
-                if comment.body.startswith("Team member @"):
-                    existing_status_comment = comment
-                    break
+    def _get_status_comment(self) -> Optional[IssueComment]:
+        """Retrieves an existing status comment for a proposal
 
-            if not existing_status_comment:
-                return "Could not retrieve team vote count"
+        Returns:
+            The status comment, or None if it cannot be found.
+        """
+        # Check this proposal is in FCP proposed state
+        if self.config.github_fcp_proposed_label not in self.proposal_labels_str:
+            return None
 
-            # Retrieve existing team votes
-            log.info("Parsing comment: %s", existing_status_comment)
-            team_votes = self._parse_team_votes_from_comment(existing_status_comment)
+        # Retrieve all of the comments for the proposal
+        comments = self.proposal.get_comments()
 
-        # Has it been proposed before? If FCP proposed label was removed before,
-        # only get comments since then
+        # Make reversible
+        comments = [c for c in comments]
 
-    def _parse_team_votes_from_comment(self, comment: Dict) -> List[str]:
+        # Find the latest status comment
+        for comment in reversed(comments):
+            if comment.body.startswith("Team member @"):
+                return comment
+
+        return None
+
+    def _parse_team_votes_from_status_comment_body(self, comment_body: str) -> List[str]:
         """Retrieves the users who have currently voted for FCP using the body of a
         given comment and cross-references them with the members of the github team
 
@@ -255,13 +334,44 @@ class CommandHandler(object):
             A list of github usernames which have voted
         """
         voted_members = []
-        for line in comment["comment"]["body"].split("\n"):
+        for line in comment_body.split("\n"):
             match = self.team_vote_regex.match(line)
             if match:
                 member = match.group(1)
                 voted_members.append(member)
 
         return voted_members
+
+    def _parse_concerns_from_status_comment_body(
+        self,
+        comment_body: str
+    ) -> List[Tuple[str, bool]]:
+        """Retrieves the concerns and their resolved state from the body of a given
+        status comment.
+        """
+        concern_tuples = []
+        for line in comment_body.split("\n"):
+            # Check if this is a concern line
+            if line.startswith("* "):
+                # Check if this concern is resolved or not
+                if line.startswith("* ~~"):
+                    # Extract concern text from resolved concern
+                    match = self.resolved_concern_regex.match(line)
+                    if not match:
+                        log.error(
+                            "Unable to match a resolved concern ('%s') with our regex",
+                            line
+                        )
+                        continue
+
+                    # Get the concern text from the regex match
+                    concern_text = match.group(1)
+                    concern_tuples.append((concern_text, True))
+                else:
+                    # Extract concern text from non-resolved concern
+                    concern_tuples.append((line[2:], False))
+
+        return concern_tuples
 
     def _format_team_votes(self, voted_members: List[str]) -> str:
         """Given a list of members who have already voted, return a str list of
@@ -274,15 +384,6 @@ class CommandHandler(object):
                 vote_text += "- [ ] @lolfake" + team_member.login + "\n"
 
         return vote_text
-
-    def _get_concerns(self, comments: List[IssueComment]) -> List[Tuple[str, bool]]:
-        """Retrieve a list of any concerns on this proposal
-
-        Returns:
-            A list of concern tuples containing: (concern text, resolved)
-        """
-        # TODO:
-        return []
 
     def _format_concerns(self, concerns: List[Tuple[str, bool]]) -> str:
         """Take a list of concern tuples and return a markdown-formatted list.
@@ -302,11 +403,9 @@ class CommandHandler(object):
         text = "Concerns:\n\n"
         for concern, resolved in concerns:
             if resolved:
-                text += "* %s"
+                text += f"* ~~{concern}~~\n"
             else:
-                text += "* ~~%s~~"
-
-            text = text % concern
+                text += f"* {concern}\n"
 
         return text
 
@@ -324,11 +423,62 @@ class CommandHandler(object):
 
         self._post_comment("Final comment period for this proposal has been cancelled.")
 
-    # TODO: Abstract into the github_bot class
-    def _post_or_update_status_comment(self, comment: Dict, text: str):
-        """Post or edit an existing status comment on a proposal"""
-        # Check for an existing status comment
-        pass
+    def _post_or_update_status_comment(
+        self,
+        voted_members: List[str] = None,
+        concerns: List[Tuple[str, bool]] = None,
+        disposition: str = None,
+        existing_status_comment: IssueComment = None,
+    ):
+        """Post or edit an existing status comment on a proposal
+
+        Args:
+            voted_members: A list of users that have voted for this proposal
+            concerns: A list of concern tuples, with concern_text, resolved
+            existing_status_comment: If set, will edit this status comment instead of
+                posting a new one
+        """
+        if (
+                (voted_members is None or concerns is None or disposition is None) and
+                existing_status_comment is None
+        ):
+            log.error("Attempted to auto-retrieve status comment values without providing"
+                      "a status comment. Proposal num: #%d", self.proposal.number)
+            return
+
+        # Auto-retrieve certain values for convenience
+        if voted_members is None:
+            voted_members = self._parse_team_votes_from_status_comment_body(
+                existing_status_comment.body
+            )
+
+        if concerns is None:
+            concerns = self._parse_concerns_from_status_comment_body(
+                existing_status_comment.body
+            )
+
+        if disposition is None:
+            disposition = self._get_disposition()
+
+        # Format voted members
+        team_votes = self._format_team_votes(voted_members)
+
+        # Format concerns
+        concerns = self._format_concerns(concerns)
+        log.info("got concerns: %s", concerns)
+
+        comment_text = self.github_fcp_proposal_template.render(
+            comment_author=self.comment["sender"]["login"],
+            disposition=disposition,
+            team_votes=team_votes,
+            concerns=concerns,
+        )
+        log.info("comment text: %s", comment_text)
+
+        if existing_status_comment:
+            existing_status_comment.edit(comment_text)
+        else:
+            self._post_comment(comment_text)
 
     def _post_comment(self, text: str) -> Optional[IssueComment]:
         """Post a comment with the given text to a proposal
@@ -355,26 +505,42 @@ class CommandHandler(object):
         # Update labels
         self.proposal.set_labels(*self.proposal_labels_str)
 
+    def _get_disposition(self) -> Optional[str]:
+        """Get the current proposal disposition
+
+        Returns:
+            The disposition type, or None if no known disposition
+        """
+        for label in self.proposal_labels_str:
+            if label == self.config.github_disposition_merge_label:
+                return "merge"
+            elif label == self.config.github_disposition_close_label:
+                return "close"
+            elif label == self.config.github_disposition_postpone_label:
+                return "postpone"
+
+        return None
+
     def _enact_disposition(self):
         """Enact a disposition on a proposal, defined by the current disposition label
         of the proposal
         """
         # Figure out which disposition to enact
-        for label in self.proposal_labels_str:
-            disposition_label = label
-            if label == self.config.github_disposition_merge_label:
-                self._merge_proposal()
-                break
-            elif label == self.config.github_disposition_close_label:
-                self._close_proposal()
-                break
-            elif label == self.config.github_disposition_postpone_label:
-                self._postpone_proposal()
-                break
-        else:
+        disposition = self._get_disposition()
+        if not disposition:
             log.error(f"Attempted to enact a disposition on a proposal without a valid "
                       f"disposition label. Proposal labels: {self.proposal_labels_str}")
             return
+
+        # TODO: Convert to enum
+        if disposition == "merge":
+            self._merge_proposal()
+            disposition_label = self.config.github_disposition_merge_label
+        elif disposition == "close":
+            self._close_proposal()
+            disposition_label = self.config.github_disposition_close_label
+        else:
+            disposition_label = self.config.github_disposition_postpone_label
 
         # Remove the FCP label
         self.proposal_labels_str.remove(self.config.github_fcp_label)
