@@ -61,25 +61,24 @@ class CommandHandler(object):
 
         self.comment = comment
 
-        log.debug("ACTION: %s", comment["action"])
-
         # Check if this is a new comment or an edit
+        comment_body = self.comment["comment"]["body"]
         if comment["action"] == "edited":
             # Check if this is an edit of a status comment
-            if self.comment["comment"]["body"].startswith("Team member @"):
+            if comment_body.startswith("Team member @"):
                 # Process status comment update
-                self._process_status_comment_update()
+                self._process_status_comment_update_with_body(comment_body)
             else:
                 # Otherwise ignore
                 return
-
-        # Run command functions
-        for command in commands:
-            name, parameters = command
-            for command_function, command_names in self.COMMANDS.items():
-                if name in command_names:
-                    # We found a matching function, run it with given parameters
-                    command_function(parameters)
+        else:
+            # Run command functions
+            for command in commands:
+                name, parameters = command
+                for command_function, command_names in self.COMMANDS.items():
+                    if name in command_names:
+                        # We found a matching function, run it with given parameters
+                        command_function(parameters)
 
         # Check if the proposal labels have changed during processing
         if self.proposal_labels_str != original_labels:
@@ -141,7 +140,31 @@ class CommandHandler(object):
         parameters: List[str]
     ):
         """Mark an in-FCP proposal as reviewed by the commenter"""
-        pass
+        # Ensure that this proposal is in FCP proposed state
+        if self.config.github_fcp_proposed_label not in self.proposal_labels_str:
+            self._post_comment("This proposal has not had an FCP proposed, so you cannot "
+                               "review it.")
+            return
+
+        # Get the current votes for this proposal
+        status_comment = self._get_status_comment()
+        if not status_comment:
+            self._post_comment("Unable to find the status comment for this proposal...")
+            return
+
+        # Get the current votes for this proposal
+        voted_members = self._parse_team_votes_from_status_comment_body(status_comment.body)
+
+        # Mark the commenter as reviewed
+        commenter = "lolfake" + self.comment["sender"]["login"]
+        if commenter not in voted_members:
+            voted_members.append(commenter)
+
+        # Update the status comment
+        self._post_or_update_status_comment(
+            voted_members=voted_members,
+            existing_status_comment=status_comment
+        )
 
     def _command_concern(
         self,
@@ -157,7 +180,6 @@ class CommandHandler(object):
 
         # Add concern to status comment
         concern_text = ' '.join(parameters)
-        log.info("concern_text: %s", concern_text)
         self._add_concern_to_status_comment(status_comment, concern_text)
 
     def _command_resolve(self, parameters: List[str]):
@@ -172,6 +194,15 @@ class CommandHandler(object):
         # Resolve concern on status comment
         concern_text = ' '.join(parameters)
         self._resolve_concern_on_status_comment(status_comment, concern_text)
+
+        # Check if this allows an FCP to occur
+
+        # Update status comment body
+        status_comment = self._get_status_comment()
+        self._process_status_comment_update_with_body(status_comment.body)
+
+        # Update labels
+        self.proposal.set_labels(*self.proposal_labels_str)
 
     def _add_concern_to_status_comment(
         self,
@@ -190,7 +221,6 @@ class CommandHandler(object):
 
         # Add this concern as unresolved
         concerns.append((concern_text, False))
-        log.info("appending: %s", concerns[-1])
 
         # Update the status comment
         self._post_or_update_status_comment(
@@ -243,7 +273,7 @@ class CommandHandler(object):
 
         # Post new status comment
         self._post_or_update_status_comment(
-            voted_members=[self.comment["sender"]["login"]],
+            voted_members=["lolfake" + self.comment["sender"]["login"]],
             concerns=[],
             disposition=disposition,
         )
@@ -259,7 +289,7 @@ class CommandHandler(object):
         # Add the proposal label
         self.proposal_labels_str.append(self.config.github_fcp_proposed_label)
 
-    def _process_status_comment_update(self):
+    def _process_status_comment_update_with_body(self, status_comment_body: str):
         """Process an edit on a status comment. Checks to see if the required
         threshold of voters have been met for an FCP proposal.
         """
@@ -267,13 +297,21 @@ class CommandHandler(object):
 
         num_team_votes = len(
             self._parse_team_votes_from_status_comment_body(
-                self.comment["comment"]["body"]
+                status_comment_body
             )
         )
         num_team_members = len([m for m in self.config.github_team.get_members()])
         
         # Check if more than 75% of people have voted
         if num_team_votes / num_team_members < 0.75:
+            return
+
+        # Prevent an FCP from starting if there are any unresolved concerns
+        concerns = self._parse_concerns_from_status_comment_body(
+            status_comment_body
+        )
+        unresolved_concerns = [c for c in concerns if c[1] == False]
+        if unresolved_concerns:
             return
 
         # Check that this proposal isn't already in FCP
@@ -290,12 +328,17 @@ class CommandHandler(object):
         fcp_conclusion_time = datetime.now() + timedelta(days=self.config.fcp_time_days)
         self.fcp_timers.new_timer(fcp_conclusion_time, self.proposal.number)
 
+        # Link to the status comment
+        status_comment = self._get_status_comment()
+
+        comment_text = (
+            f":bell: This is now entering its final comment period, "
+            f"as per [the review]({status_comment.html_url}) above. :bell:"
+        )
+
         # Post a comment stating that FCP has begun
         # TODO: Final comment period jinja2 template
-        self._post_comment(
-            ":bell: This is now entering its final comment period, "
-            "as per the review above. :bell:"
-        )
+        self._post_comment(comment_text)
 
         # Add the FCP label
         self.proposal_labels_str.append(self.config.github_fcp_label)
@@ -378,7 +421,7 @@ class CommandHandler(object):
         who has an hasn't voted"""
         vote_text = ""
         for team_member in self.config.github_team.get_members():
-            if team_member.login in voted_members:
+            if "lolfake" + team_member.login in voted_members:
                 vote_text += "- [x] @lolfake" + team_member.login + "\n"
             else:
                 vote_text += "- [ ] @lolfake" + team_member.login + "\n"
@@ -465,7 +508,6 @@ class CommandHandler(object):
 
         # Format concerns
         concerns = self._format_concerns(concerns)
-        log.info("got concerns: %s", concerns)
 
         comment_text = self.github_fcp_proposal_template.render(
             comment_author=self.comment["sender"]["login"],
@@ -473,7 +515,6 @@ class CommandHandler(object):
             team_votes=team_votes,
             concerns=concerns,
         )
-        log.info("comment text: %s", comment_text)
 
         if existing_status_comment:
             existing_status_comment.edit(comment_text)
@@ -532,14 +573,18 @@ class CommandHandler(object):
                       f"disposition label. Proposal labels: {self.proposal_labels_str}")
             return
 
+        # Link to the status comment
+        status_comment = self._get_status_comment()
+
         # TODO: Convert to enum
         if disposition == "merge":
-            self._merge_proposal()
+            self._merge_proposal(status_comment.html_url)
             disposition_label = self.config.github_disposition_merge_label
         elif disposition == "close":
-            self._close_proposal()
+            self._close_proposal(status_comment.html_url)
             disposition_label = self.config.github_disposition_close_label
         else:
+            self._postpone_proposal(status_comment.html_url)
             disposition_label = self.config.github_disposition_postpone_label
 
         # Remove the FCP label
@@ -549,22 +594,23 @@ class CommandHandler(object):
         if disposition_label:
             self.proposal_labels_str.remove(disposition_label)
 
-    def _merge_proposal(self):
+    def _merge_proposal(self, status_comment_url: str):
         # TODO: Merge the proposal. Has to be done with git
         self._post_comment(
-            "The final comment period, with a disposition to **merge**, as per "
-            "the review above, is now **complete**."
+            f"The final comment period, with a disposition to **merge**, as per "
+            f"[the review]({status_comment_url}) above, is now **complete**."
         )
 
-    def _close_proposal(self):
+    def _close_proposal(self, status_comment_url: str):
         self._post_comment(
             "The final comment period, with a disposition to **close**, as per "
-            "the review above, is now **complete**."
+            f"[the review]({status_comment_url}) above, is now **complete**."
         )
         self.proposal.edit(state="closed")
 
-    def _postpone_proposal(self):
+    def _postpone_proposal(self, status_comment_url: str):
         self._post_comment(
             "The final comment period, with a disposition to **postpone**, as per "
             "the review above, is now **complete**."
+            f"[the review]({status_comment_url}) above, is now **complete**."
         )
