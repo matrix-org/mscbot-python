@@ -156,7 +156,7 @@ class CommandHandler(object):
         voted_members = self._parse_team_votes_from_status_comment_body(status_comment.body)
 
         # Mark the commenter as reviewed
-        commenter = "lolfake" + self.comment["sender"]["login"]
+        commenter = self.comment["sender"]["login"]
         if commenter not in voted_members:
             voted_members.append(commenter)
 
@@ -273,7 +273,7 @@ class CommandHandler(object):
 
         # Post new status comment
         self._post_or_update_status_comment(
-            voted_members=["lolfake" + self.comment["sender"]["login"]],
+            voted_members=[self.comment["sender"]["login"]],
             concerns=[],
             disposition=disposition,
         )
@@ -421,10 +421,10 @@ class CommandHandler(object):
         who has an hasn't voted"""
         vote_text = ""
         for team_member in self.config.github_team.get_members():
-            if "lolfake" + team_member.login in voted_members:
-                vote_text += "- [x] @lolfake" + team_member.login + "\n"
+            if team_member.login in voted_members:
+                vote_text += "- [x] @" + team_member.login + "\n"
             else:
-                vote_text += "- [ ] @lolfake" + team_member.login + "\n"
+                vote_text += "- [ ] @" + team_member.login + "\n"
 
         return vote_text
 
