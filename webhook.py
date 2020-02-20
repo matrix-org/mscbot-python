@@ -51,7 +51,7 @@ class WebhookHandler(object):
 
         @webhook.hook("issue_comment")
         def on_issue_comment(data):
-            log.info(f"Got comment: {json.dumps(data, indent=4, sort_keys=True)}")
+            log.debug(f"Got comment: {json.dumps(data, indent=4, sort_keys=True)}")
             self._process_issue_comment(data)
 
     def run(self):
