@@ -66,6 +66,37 @@ source env/bin/activate
 python -m mscbot
 ```
 
+### Command line flags
+
+The following command line options are available:
+
+* `-c`/`config` - The path to a config file. Defaults to `./config.yaml`.
+
+## Docker
+
+### Getting the image
+Either download the latest release from Dockerhub:
+
+```
+docker pull matrixdotorg/mscbot-python
+```
+
+Or build an image from the source locally:
+
+```
+docker build -t matrixdotorg/mscbot-python .
+```
+
+### Running
+
+TODO: Set up postgres container
+
+Put your config file somewhere and then mount it via a volume.
+
+```
+docker run -v /path/to/config/dir:/config matrixdotorg/mscbot-python python -m mscbot -c /config/config.yaml
+```
+
 ## Design
 
 ### Storage
