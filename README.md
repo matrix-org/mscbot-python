@@ -97,6 +97,10 @@ Put your config file somewhere and then mount it via a volume.
 docker run -v /path/to/config/dir:/config matrixdotorg/mscbot-python python -m mscbot -c /config/config.yaml
 ```
 
+## User guide
+
+See [docs/USER_GUIDE.md](docs/USER_GUIDE.md).
+
 ## Design
 
 ### Storage
