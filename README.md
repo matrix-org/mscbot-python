@@ -38,6 +38,25 @@ cp sample.config.yaml config.yaml
 vi config.yaml
 ```
 
+### Server and webhook setup
+
+On github:
+
+1. Go to your Github project -> Settings -> Webhooks
+1. Add a new webhook, point it to a URL that the bot can be accessed at
+1. Set the content type to `application/json`
+1. Come up with and set a secret (hint: use the `uuid` terminal command)
+1. Under events, select "Let me select individual events". And check the following:
+    - Issue comments
+    - Pull request review comments
+
+On your server:
+
+1. Edit the config file and
+    - add the webhook secret
+    - configure the appropriate webhook path (`/webhook` by default). The bot will listen
+     here for webhook hits from github
+
 ### Usage
 
 Activate the virtualenv and start mscbot:

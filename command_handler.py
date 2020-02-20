@@ -271,6 +271,10 @@ class CommandHandler(object):
                                "cancel the current one first.")
             return
 
+        # Remove finished FCP label if present
+        if self.config.github_fcp_finished_label in self.proposal_labels_str:
+            self.proposal_labels_str.remove(self.config.github_fcp_finished_label)
+
         # Post new status comment
         self._post_or_update_status_comment(
             voted_members=[self.comment["sender"]["login"]],
@@ -590,6 +594,9 @@ class CommandHandler(object):
         # Remove the FCP label
         self.proposal_labels_str.remove(self.config.github_fcp_label)
 
+        # Add the "finished FCP" label
+        self.proposal_labels_str.append(self.config.github_fcp_finished_label)
+
         # Remove the disposition label
         if disposition_label:
             self.proposal_labels_str.remove(disposition_label)
@@ -611,6 +618,5 @@ class CommandHandler(object):
     def _postpone_proposal(self, status_comment_url: str):
         self._post_comment(
             "The final comment period, with a disposition to **postpone**, as per "
-            "the review above, is now **complete**."
             f"[the review]({status_comment_url}) above, is now **complete**."
         )

@@ -87,6 +87,9 @@ class Config(object):
         self.github_fcp_proposed_label = self._get_config_item(
             ["github", "labels", "fcp_proposed"]
         )
+        self.github_fcp_finished_label = self._get_config_item(
+            ["github", "labels", "fcp_finished"]
+        )
         self.github_disposition_merge_label = self._get_config_item(
             ["github", "labels", "disposition_merge"]
         )
@@ -114,7 +117,7 @@ class Config(object):
         self.webhook_host = self._get_config_item(["webhook", "host"], "0.0.0.0")
         self.webhook_port = self._get_config_item(["webhook", "port"], 5050)
         self.webhook_path = self._get_config_item(["webhook", "path"], "/webhook")
-        self.webhook_secret = self._get_config_item(["webhook", "secret"], required=False)
+        self.webhook_secret = self._get_config_item(["webhook", "secret"])
 
     def _get_config_item(
             self,

@@ -16,7 +16,6 @@ import json
 from typing import Dict
 from github import Github
 from github.Repository import Repository
-from github.Issue import Issue
 from config import Config
 from command_handler import CommandHandler
 from github_webhook import Webhook
@@ -40,8 +39,11 @@ class WebhookHandler(object):
         # Start a flash webserver
         self.app = Flask(__name__)
 
-        # TODO: Figure out webhook secret
-        webhook = Webhook(self.app, endpoint=self.config.webhook_path)
+        webhook = Webhook(
+            self.app,
+            endpoint=self.config.webhook_path,
+            secret=self.config.webhook_secret,
+        )
 
         @self.app.route("/")
         def hello_world():
