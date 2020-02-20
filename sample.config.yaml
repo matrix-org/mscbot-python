@@ -39,10 +39,6 @@ webhook:
   # Your webhook secret that was given to github
   secret: zyxwvutsrqponmlkjihgfedcba0987654321
 
-database:
-  # The path to a postgres database
-  postgres_path: "postgres://mscbot:somethingsecure@localhost/mscbot?sslmode=disable"
-
 logging:
   # Max logging level
   # Allowed levels are 'INFO', 'WARNING', 'ERROR', 'DEBUG' where DEBUG is the most verbose
