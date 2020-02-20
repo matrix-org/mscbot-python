@@ -113,6 +113,7 @@ class Config(object):
         # Webhook setup
         self.webhook_host = self._get_config_item(["webhook", "host"], "0.0.0.0")
         self.webhook_port = self._get_config_item(["webhook", "port"], 5050)
+        self.webhook_path = self._get_config_item(["webhook", "path"], "/webhook")
         self.webhook_secret = self._get_config_item(["webhook", "secret"], required=False)
 
     def _get_config_item(

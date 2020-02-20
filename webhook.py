@@ -41,7 +41,7 @@ class WebhookHandler(object):
         self.app = Flask(__name__)
 
         # TODO: Figure out webhook secret
-        webhook = Webhook(self.app, endpoint="/webhook")
+        webhook = Webhook(self.app, endpoint=self.config.webhook_path)
 
         @self.app.route("/")
         def hello_world():
