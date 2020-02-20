@@ -1,6 +1,10 @@
-# MSCBot Python
+# MSCBot: Python Edition™
 
-mscbot written in python.
+A bot to help facilitate the [Matrix Spec Proposal
+Process](https://matrix.org/docs/spec/proposals).
+
+However it is written in a generic way such that it can be used for any project wanting to
+make use of a similar process.
 
 ## Installation
 
@@ -9,10 +13,6 @@ mscbot written in python.
 ```
 git clone https://github.com/matrix-org/mscbot-python && cd mscbot-python
 ```
-
-### Distro dependencies
-
-Ubuntu: `apt install libpq-dev python-virtualenv postgres`
 
 ### Python dependencies
 
@@ -29,25 +29,16 @@ Install packages:
 pip install -e .
 ```
 
-## Database setup
-
-Create a postgres user and database for mscbot:
-
-```
-sudo -u postgres createuser mscbot  # prompts for password
-sudo -u postgres createdb -O mscbot mscbot
-```
-
-## Config
+### Config
 
 Copy and update the config file:
 
 ```
 cp sample.config.yaml config.yaml
-# update config.yaml
+vi config.yaml
 ```
 
-## Usage
+### Usage
 
 Activate the virtualenv and start mscbot:
 
@@ -55,3 +46,13 @@ Activate the virtualenv and start mscbot:
 source env/bin/activate
 python -m mscbot
 ```
+
+## Design
+
+### Storage
+
+MSCBot uses Github as its state store. Modifying the state of a proposal is as easy as
+editing a status comment (the comment with votes that the bot posts) or modifying labels.
+
+Currently it also uses a single JSON file on disk to store timer information, but it is
+proposed that this be migrated to be stored in comments as well.

@@ -24,7 +24,7 @@ github:
   fcp_proposal_template_path: comment_templates/fcp_proposal.j2
 
 fcp:
-  # Length of a final comment in days
+  # Length of a final comment period in days
   time_days: 5
   # Path to a JSON file storing FCP timer information
   timer_json_filepath: timers.json
