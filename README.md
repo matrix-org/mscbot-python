@@ -52,10 +52,10 @@ On github:
 
 On your server:
 
-1. Edit the config file and
-    - add the webhook secret
-    - configure the appropriate webhook path (`/webhook` by default). The bot will listen
-     here for webhook hits from github
+Edit the config file and
+  - add the webhook secret
+  - configure the appropriate webhook path (`/webhook` by default). The bot will listen
+    here for webhook hits from github
 
 ### Usage
 
