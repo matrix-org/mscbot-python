@@ -13,19 +13,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from github import Github
-from github.GithubException import UnknownObjectException
 import logging
+import argparse
 
 from config import Config
 from webhook import WebhookHandler
+from github import Github
+from github.GithubException import UnknownObjectException
 
 log = logging.getLogger(__name__)
 
 
 def main():
+    # Set up cmdline argument parsing
+    parser = argparse.ArgumentParser(description="Proposal processing bot.")
+    parser.add_argument(
+        "-c",
+        "--config",
+        type=str,
+        default="config.yaml",
+        help="Path to a config file")
+    cmdline_args = parser.parse_args()
+
     # Read the config file
-    config = Config("config.yaml")
+    config = Config(cmdline_args.config)
 
     # Log into github with provided access token
     github = Github(config.github_access_token)
