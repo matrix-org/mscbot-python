@@ -307,7 +307,8 @@ class CommandHandler(object):
         num_team_members = len([m for m in self.config.github_team.get_members()])
         
         # Check if more than 75% of people have voted
-        if num_team_votes / num_team_members < 0.75:
+        team_vote_ratio = num_team_votes / num_team_members
+        if team_vote_ratio < self.config.fcp_required_team_vote_ratio:
             return
 
         # Prevent an FCP from starting if there are any unresolved concerns

@@ -112,6 +112,9 @@ class Config(object):
         self.fcp_timer_json_filepath = self._get_config_item(
             ["fcp", "timer_json_filepath"]
         )
+        self.fcp_required_team_vote_ratio= self._get_config_item(
+            ["fcp", "required_team_vote_ratio"]
+        )
 
         # Webhook setup
         self.webhook_host = self._get_config_item(["webhook", "host"], "0.0.0.0")
