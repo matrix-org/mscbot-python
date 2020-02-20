@@ -17,7 +17,6 @@ from github import Github
 from github.GithubException import UnknownObjectException
 import logging
 
-from fcp_timers import FCPTimers
 from config import Config
 from webhook import WebhookHandler
 
