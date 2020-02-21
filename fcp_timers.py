@@ -11,12 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import json
 import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.date import DateTrigger
 from apscheduler.job import Job
-from apscheduler.jobstores.base import JobLookupError
+from storage import Storage
 from datetime import datetime
 from errors import ProposalNotInFCP
 
@@ -24,24 +23,15 @@ log = logging.getLogger(__name__)
 
 
 class FCPTimers(object):
-    """An object to store FCP timer information. Timers are stored in a json
-    file along with the corresponding proposal number.
-
-    Example:
-
-        {
-            "123": "1581592213",  # proposal #123 FCP ends at this unix timestamp
-            "456": "1581592416"
-        }
+    """An object to store FCP timer information. Timers are stored in a database
 
     Args:
-        filepath: path to the timer json file
         callback_func: Callback function. Will be called with the proposal_num (int)
             as an argument
     """
 
-    def __init__(self, filepath: str, callback_func):
-        self.filepath = filepath
+    def __init__(self, store: Storage, callback_func):
+        self.store = store
         self.callback_func = callback_func
 
         # Create a BackgroundScheduler.
@@ -50,29 +40,14 @@ class FCPTimers(object):
         self.scheduler = BackgroundScheduler()
         self.scheduler.start()
 
-        # Load timer information
-
         # Create a dict from proposal number to scheduler Job
         self.timers = {}
-        try:
-            with open(filepath) as data_file:
-                timer_dict = json.loads(data_file.read())
-                for proposal_num, timestamp in timer_dict.items():
-                    # Convert the timestamp to a datetime
-                    run_time = datetime.fromtimestamp(timestamp)
 
-                    self.new_timer(run_time, proposal_num)
-        except FileNotFoundError:
-            # The file doesn't exist yet
-            log.debug(
-                "File at fcp.timer_json_filepath does not exist yet. Creating "
-                "one..."
-            )
-            with open(filepath, 'w+') as data_file:
-                data_file.write("{}")
+        # Load timer information
+        self._db_load_timers()
 
-    def new_timer(self, run_time: datetime, proposal_num: int):
-        """Start a new timer. Saves the timer to disk"""
+    def new_timer(self, run_time: datetime, proposal_num: int, save=True):
+        """Start a new timer. Saves the timer to the db if `save` is True"""
         # Schedule a new job
         job = self.scheduler.add_job(self._run_callback, DateTrigger(run_time),
                                      args=[proposal_num])
@@ -80,8 +55,9 @@ class FCPTimers(object):
         # Record the timer's job ID along with the proposal number
         self.timers[proposal_num] = job
 
-        # Save timers
-        self._save_timers_to_disk()
+        # Save timer to db
+        if save:
+            self._db_save_timer(run_time, proposal_num)
 
     def cancel_timer_for_proposal_num(self, proposal_num: int):
         """Stop a scheduled timer and delete it from disk"""
@@ -94,20 +70,42 @@ class FCPTimers(object):
         if self.scheduler.get_job(job.id):
             job.remove()
 
-        # Remove it from disk
         self.timers.pop(proposal_num)
-        self._save_timers_to_disk()
 
-    def _save_timers_to_disk(self):
-        """Takes the current state of self.timers and overwrites the contents on disk"""
-        # Construct a dict of proposal_num: unix timestamp
-        proposal_num_to_timestamp = {}
-        for proposal_num, job in self.timers.items():
-            proposal_num_to_timestamp[proposal_num] = int(job.next_run_time.timestamp())
+        # Remove it from the db
+        self._db_delete_timer(proposal_num)
 
-        # Write that dict to disk
-        with open(self.filepath, 'w+') as data_file:
-            data_file.write(json.dumps(proposal_num_to_timestamp))
+    def _db_load_timers(self):
+        """Load all known FCP timers from the DB into self.timers"""
+        with self.store.conn:
+            self.store.cur.execute("SELECT * FROM fcp_timers")
+            rows = self.store.cur.fetchall()
+            if not rows:
+                return
+
+            for row in rows:
+                proposal_num = row[0]
+                timestamp = row[1]
+
+                run_time = datetime.fromtimestamp(timestamp)
+                self.new_timer(run_time, proposal_num, save=False)
+
+    def _db_save_timer(self, timestamp: datetime, proposal_num: int):
+        """Saves a timer to the database"""
+        with self.store.conn:
+            self.store.cur.execute("""
+            INSERT INTO fcp_timers (proposal_num, end_timestamp)
+            VALUES (%s, %s)
+            """, (proposal_num, timestamp.timestamp()))
+
+    def _db_delete_timer(self, proposal_num: int):
+        """Deletes a timer from the database"""
+        with self.store.conn:
+            log.info("DELETING %s", proposal_num)
+            self.store.cur.execute(
+                "DELETE FROM fcp_timers WHERE proposal_num = %s",
+                (proposal_num,)
+            )
 
     def _run_callback(self, proposal_num: int):
         """Fires when a timer goes off. Delete the timer and call the callback function"""

@@ -26,10 +26,12 @@ github:
 fcp:
   # Length of a final comment period in days
   time_days: 5
-  # Path to a JSON file storing FCP timer information
-  timer_json_filepath: timers.json
   # Required percentage of team votes to pass an FCP proposal
   required_team_vote_ratio: 0.75
+
+database:
+  # The path to a postgres database for state storage
+  path: "postgres://mscbot:itsasecret@localhost/mscbot?sslmode=disable"
 
 webhook:
   # Address to listen on

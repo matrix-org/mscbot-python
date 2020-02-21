@@ -17,6 +17,7 @@ import logging
 import argparse
 
 from config import Config
+from storage import Storage
 from webhook import WebhookHandler
 from github import Github
 from github.GithubException import UnknownObjectException
@@ -37,6 +38,9 @@ def main():
 
     # Read the config file
     config = Config(cmdline_args.config)
+
+    # Set up the database
+    store = Storage(config.database_path)
 
     # Log into github with provided access token
     github = Github(config.github_access_token)
@@ -72,7 +76,7 @@ def main():
         return
 
     # Create a webhook handler
-    webhook_handler = WebhookHandler(config, github, repo)
+    webhook_handler = WebhookHandler(config, store, github, repo)
 
     # Start accepting webhooks
     webhook_handler.run()

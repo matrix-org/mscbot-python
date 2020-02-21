@@ -50,7 +50,7 @@ class Config(object):
         log.setLevel(log_level)
 
         file_logging_enabled = self._get_config_item(
-            ["logging", "file_logging"], "enabled", False
+            ["logging", "file_logging"], "enabled", required=False
         )
         if file_logging_enabled:
             file_logging_filepath = self._get_config_item(
@@ -61,12 +61,17 @@ class Config(object):
             log.addHandler(handler)
 
         console_logging_enabled = self._get_config_item(
-            ["logging", "console_logging", "enabled"], True
+            ["logging", "console_logging", "enabled"]
         )
         if console_logging_enabled:
             handler = logging.StreamHandler(sys.stdout)
             handler.setFormatter(formatter)
             log.addHandler(handler)
+
+        # Database setup
+        self.database_path = self._get_config_item(
+            ["database", "path"]
+        )
 
         # Github setup
         self.github_user = None  # Set later once we connect to github successfully
@@ -109,9 +114,6 @@ class Config(object):
 
         # FCP information
         self.fcp_time_days = self._get_config_item(["fcp", "time_days"], required=False)
-        self.fcp_timer_json_filepath = self._get_config_item(
-            ["fcp", "timer_json_filepath"]
-        )
         self.fcp_required_team_vote_ratio= self._get_config_item(
             ["fcp", "required_team_vote_ratio"]
         )

@@ -17,6 +17,7 @@ from datetime import datetime, timedelta
 from jinja2 import Template
 from typing import Dict, Tuple, List, Optional
 from config import Config
+from storage import Storage
 from github.IssueComment import IssueComment
 from github.Repository import Repository
 from fcp_timers import FCPTimers
@@ -27,7 +28,7 @@ log = logging.getLogger(__name__)
 class CommandHandler(object):
     """Processes and handles issue comments that contain commands"""
 
-    def __init__(self, config: Config, repo: Repository):
+    def __init__(self, config: Config, store: Storage, repo: Repository):
         self.config = config
         self.repo = repo
         self.COMMANDS = {
@@ -47,7 +48,7 @@ class CommandHandler(object):
 
         # Set up FCP timer handler, and callback functions
         self.fcp_timers = FCPTimers(
-            config.fcp_timer_json_filepath, self._on_fcp_timer_fired
+            store, self._on_fcp_timer_fired
         )
 
     def handle_comment(self, comment: Dict):
@@ -330,7 +331,8 @@ class CommandHandler(object):
     def _start_fcp(self):
         """Begin an FCP. Start a timer"""
         # Calculate when this FCP should conclude
-        fcp_conclusion_time = datetime.now() + timedelta(days=self.config.fcp_time_days)
+        fcp_conclusion_time = datetime.now() + timedelta(days=self.config.fcp_time_days) \
+                              + timedelta(seconds=10)
         self.fcp_timers.new_timer(fcp_conclusion_time, self.proposal.number)
 
         # Link to the status comment
@@ -357,10 +359,6 @@ class CommandHandler(object):
         Returns:
             The status comment, or None if it cannot be found.
         """
-        # Check this proposal is in FCP proposed state
-        if self.config.github_fcp_proposed_label not in self.proposal_labels_str:
-            return None
-
         # Retrieve all of the comments for the proposal
         comments = self.proposal.get_comments()
 
@@ -427,9 +425,9 @@ class CommandHandler(object):
         vote_text = ""
         for team_member in self.config.github_team.get_members():
             if team_member.login in voted_members:
-                vote_text += "- [x] @" + team_member.login + "\n"
+                vote_text += "- [x] @lolfake" + team_member.login + "\n"
             else:
-                vote_text += "- [ ] @" + team_member.login + "\n"
+                vote_text += "- [ ] @lolfake" + team_member.login + "\n"
 
         return vote_text
 

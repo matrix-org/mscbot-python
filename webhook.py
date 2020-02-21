@@ -17,6 +17,7 @@ from typing import Dict
 from github import Github
 from github.Repository import Repository
 from config import Config
+from storage import Storage
 from command_handler import CommandHandler
 from github_webhook import Webhook
 from flask import Flask
@@ -28,13 +29,14 @@ class WebhookHandler(object):
     def __init__(
         self,
         config: Config,
+        store: Storage,
         github: Github,
         repo: Repository,
     ):
         self.config = config
         self.github = github
         self.repo = repo
-        self.command_handler = CommandHandler(config, repo)
+        self.command_handler = CommandHandler(config, store, repo)
 
         # Start a flash webserver
         self.app = Flask(__name__)

@@ -6,6 +6,8 @@ Process](https://matrix.org/docs/spec/proposals).
 However it is written in a generic way such that it can be used for any project wanting to
 make use of a similar process.
 
+# TODO: Postgres docs
+
 ## Installation
 
 ### Getting the code
@@ -99,14 +101,4 @@ docker run -v /path/to/config/dir:/config matrixdotorg/mscbot-python python -m m
 
 ## User guide
 
-See [docs/USER_GUIDE.md](docs/USER_GUIDE.md).
-
-## Design
-
-### Storage
-
-MSCBot uses Github as its state store. Modifying the state of a proposal is as easy as
-editing a status comment (the comment with votes that the bot posts) or modifying labels.
-
-Currently it also uses a single JSON file on disk to store timer information, but it is
-proposed that this be migrated to be stored in comments as well.
+See [docs/user_guide.md](docs/user_guide.md).
