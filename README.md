@@ -6,8 +6,6 @@ Process](https://matrix.org/docs/spec/proposals).
 However it is written in a generic way such that it can be used for any project wanting to
 make use of a similar process.
 
-# TODO: Postgres docs
-
 ## Installation
 
 ### Getting the code
@@ -31,6 +29,19 @@ Install packages:
 pip install -e .
 ```
 
+### OS dependencies
+
+Install [Postgres](https://www.postgresql.org/download/).
+
+Create a user and a database:
+
+```
+sudo -u postgres psql
+postgres=# create database mscbot;
+postgres=# create user mscbot with encrypted password 'super-strong-password';
+postgres=# grant all privileges on database mscbot to mscbot;
+```
+
 ### Config
 
 Copy and update the config file:
@@ -39,6 +50,8 @@ Copy and update the config file:
 cp sample.config.yaml config.yaml
 vi config.yaml
 ```
+
+Be sure to enter the postgres user, password and database details from above.
 
 ### Server and webhook setup
 
@@ -77,6 +90,7 @@ The following command line options are available:
 ## Docker
 
 ### Getting the image
+
 Either download the latest release from Dockerhub:
 
 ```
@@ -89,9 +103,10 @@ Or build an image from the source locally:
 docker build -t matrixdotorg/mscbot-python .
 ```
 
-### Running
+You'll also probably want a [postgres
+container](https://hub.docker.com/_/postgres) to hold your database.
 
-TODO: Set up postgres container
+### Running
 
 Put your config file somewhere and then mount it via a volume.
 
