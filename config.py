@@ -50,7 +50,7 @@ class Config(object):
         log.setLevel(log_level)
 
         file_logging_enabled = self._get_config_item(
-            ["logging", "file_logging"], "enabled", required=False
+            ["logging", "file_logging", "enabled"], required=False
         )
         if file_logging_enabled:
             file_logging_filepath = self._get_config_item(
