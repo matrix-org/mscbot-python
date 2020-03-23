@@ -29,7 +29,7 @@ setup(
         "waitress>=1.4.3",
         "jinja2>=2.11.1",
         "APScheduler>=3.6.3",
-        "psycopg2>=2.8.4",
+        "psycopg2-binary>=2.8.4",
     ],
     classifiers=[
         'License :: OSI Approved :: Apache Software License',

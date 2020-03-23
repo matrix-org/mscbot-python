@@ -8,4 +8,4 @@ RUN pip install -e /src
 
 # Run mscbot
 # We use CMD here instead of ENTRYPOINT, as it allows you to exec in easily
-CMD ["/usr/bin/python", "-m", "mscbot"]
+CMD ["/usr/local/bin/python3", "-m", "mscbot", "-c", "/config.yaml"]

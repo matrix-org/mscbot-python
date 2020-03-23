@@ -8,6 +8,8 @@ github:
     fcp: final-comment-period
     # Denotes an issue/pr as fcp proposed
     fcp_proposed: proposed-final-comment-period
+    # Denotes an issue/pr as fcp finished
+    fcp_finished: finished-final-comment-period
     # Denotes an issue/pr as fcp proposed with a disposition of merge
     disposition_merge: disposition-merge
     # Denotes an issue/pr as fcp proposed with a disposition of close
