@@ -425,9 +425,9 @@ class CommandHandler(object):
         vote_text = ""
         for team_member in self.config.github_team.get_members():
             if team_member.login in voted_members:
-                vote_text += "- [x] @lolfake" + team_member.login + "\n"
+                vote_text += "- [x] @" + team_member.login + "\n"
             else:
-                vote_text += "- [ ] @lolfake" + team_member.login + "\n"
+                vote_text += "- [ ] @" + team_member.login + "\n"
 
         return vote_text
 
