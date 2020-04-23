@@ -310,6 +310,11 @@ class CommandHandler(object):
         # Check if more than 75% of people have voted
         team_vote_ratio = num_team_votes / num_team_members
         if team_vote_ratio < self.config.fcp_required_team_vote_ratio:
+            log.debug(
+                "Not enough votes to begin FCP %s/%s",
+                team_vote_ratio,
+                self.config.fcp_required_team_vote_ratio,
+            )
             return
 
         # Prevent an FCP from starting if there are any unresolved concerns
@@ -318,6 +323,9 @@ class CommandHandler(object):
         )
         unresolved_concerns = [c for c in concerns if c[1] == False]
         if unresolved_concerns:
+            log.debug(
+                "Proposal has unresolved concerns: %s", unresolved_concerns
+            )
             return
 
         # Check that this proposal isn't already in FCP
@@ -330,9 +338,14 @@ class CommandHandler(object):
 
     def _start_fcp(self):
         """Begin an FCP. Start a timer"""
+        log.debug("Beginning FCP...")
+
         # Calculate when this FCP should conclude
-        fcp_conclusion_time = datetime.now() + timedelta(days=self.config.fcp_time_days) \
-                              + timedelta(seconds=10)
+        fcp_conclusion_time = (
+            datetime.now()
+            + timedelta(days=self.config.fcp_time_days)
+            + timedelta(seconds=10)
+        )
         self.fcp_timers.new_timer(fcp_conclusion_time, self.proposal.number)
 
         # Link to the status comment
@@ -457,6 +470,8 @@ class CommandHandler(object):
 
     def _cancel_fcp(self):
         """Cancel FCP"""
+        log.debug("Cancelling FCP...")
+
         if self.config.github_fcp_label not in self.proposal_labels_str:
             self._post_comment("This proposal is not in FCP.")
             return
@@ -519,6 +534,8 @@ class CommandHandler(object):
             concerns=concerns,
         )
 
+        log.debug("Posting/updating status comment: %s", comment_text)
+
         if existing_status_comment:
             existing_status_comment.edit(comment_text)
         else:
@@ -539,6 +556,8 @@ class CommandHandler(object):
 
     # TODO: All of this should go in a github_client class
     def _on_fcp_timer_fired(self, proposal_num: int):
+        log.info("FCP for proposal %d has concluded", proposal_num)
+
         # Retrieve the proposal object of this proposal
         self.proposal = self.repo.get_issue(proposal_num)
         self.proposal_labels_str = [label.name for label in self.proposal.get_labels()]

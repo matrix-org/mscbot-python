@@ -61,6 +61,8 @@ class WebhookHandler(object):
         serve(self.app, host=self.config.webhook_host, port=self.config.webhook_port)
 
     def _process_issue_comment(self, comment: Dict):
+        log.debug("Processing issue comment: %s", comment)
+
         comment_author = comment["sender"]
         comment_author_login = comment_author["login"]
 
