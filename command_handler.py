@@ -366,8 +366,9 @@ class CommandHandler(object):
         # Add the FCP label
         self.proposal_labels_str.append(self.config.github_fcp_label)
 
-        # Remove the FCP proposal label
-        self.proposal_labels_str.remove(self.config.github_fcp_proposed_label)
+        # Remove the FCP proposal label if present
+        if self.config.github_fcp_proposed_label in self.proposal_labels_str:
+            self.proposal_labels_str.remove(self.config.github_fcp_proposed_label)
 
     def _get_status_comment(self) -> Optional[IssueComment]:
         """Retrieves an existing status comment for a proposal
@@ -494,8 +495,9 @@ class CommandHandler(object):
             self._post_comment("This proposal is not in FCP.")
             return
 
-        # Remove the FCP label
-        self.proposal_labels_str.remove(self.config.github_fcp_label)
+        # Remove the FCP label if present
+        if self.config.github_fcp_label in self.proposal_labels_str:
+            self.proposal_labels_str.remove(self.config.github_fcp_label)
 
         # Remove the FCP timer
         self.fcp_timers.cancel_timer_for_proposal_num(self.proposal.number)
@@ -627,14 +629,15 @@ class CommandHandler(object):
             self._postpone_proposal(status_comment.html_url)
             disposition_label = self.config.github_disposition_postpone_label
 
-        # Remove the FCP label
-        self.proposal_labels_str.remove(self.config.github_fcp_label)
+        # Remove the FCP label if present
+        if self.config.github_fcp_label in self.proposal_labels_str:
+            self.proposal_labels_str.remove(self.config.github_fcp_label)
 
         # Add the "finished FCP" label
         self.proposal_labels_str.append(self.config.github_fcp_finished_label)
 
         # Remove the disposition label
-        if disposition_label:
+        if disposition_label and disposition_label in self.proposal_labels_str:
             self.proposal_labels_str.remove(disposition_label)
 
     def _merge_proposal(self, status_comment_url: str):
