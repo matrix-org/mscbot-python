@@ -19,7 +19,7 @@ from setuptools import setup
 
 setup(
     name="mscbot",
-    version="0.0.1",
+    version="0.1.3",
     py_modules=["mscbot"],
     description="A bot to help manage the MSC process",
     install_requires=[
