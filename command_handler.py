@@ -69,12 +69,13 @@ class CommandHandler(object):
         comment_body = self.comment["comment"]["body"]
         if comment["action"] == "edited":
             # Check if this is an edit of a status comment
-            if comment_body.startswith("Team member @"):
-                # Process status comment update
-                self._process_status_comment_update_with_body(comment_body)
-            else:
-                # Otherwise ignore
+            known_status_comment = self._get_status_comment()
+            if not known_status_comment or comment["comment"]["id"] != known_status_comment.id:
+                log.debug("Ignoring edit of non-status comment")
                 return
+
+            # Process status comment update
+            self._process_status_comment_update_with_body(comment_body)
         else:
             # Run command functions
             for command in commands:
@@ -202,7 +203,6 @@ class CommandHandler(object):
         # Check if this allows an FCP to occur
 
         # Update status comment body
-        status_comment = self._get_status_comment()
         self._process_status_comment_update_with_body(status_comment.body)
 
         # Update labels
@@ -383,7 +383,10 @@ class CommandHandler(object):
 
         # Find the latest status comment
         for comment in reversed(comments):
-            if comment.body.startswith("Team member @"):
+            if (
+                    comment.body.startswith("Team member @")
+                    and comment.user.login == self.config.github_user.login
+            ):
                 return comment
 
         return None
