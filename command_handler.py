@@ -324,7 +324,7 @@ class CommandHandler(object):
         concerns = self._parse_concerns_from_status_comment_body(
             status_comment_body
         )
-        unresolved_concerns = [c for c in concerns if c[1] == False]
+        unresolved_concerns = [c for c in concerns if c[1] is False]
         if unresolved_concerns:
             log.debug(
                 "Proposal has unresolved concerns: %s", unresolved_concerns
@@ -412,11 +412,23 @@ class CommandHandler(object):
         status comment.
         """
         concern_tuples = []
+
+        # We search for a list of concerns in the comment body, however
+        # tagged members is also a list. We know the list of concerns will
+        # come after a line starting with "concerns:", so ignore all list
+        # items before that
+        past_tagged_people_list = False
         for line in comment_body.split("\n"):
+            # Check if we've passed the Concerns: bit of a status comment yet
+            if line.lower().startswith("concerns:"):
+                past_tagged_people_list = True
+            if not past_tagged_people_list:
+                continue
+
             # Check if this is a concern line
-            if line.startswith("* "):
+            if line.startswith("* ") or line.startswith("- "):
                 # Check if this concern is resolved or not
-                if line.startswith("* ~~"):
+                if line.startswith("* ~~") or line.startswith("- ~~"):
                     # Extract concern text from resolved concern
                     match = self.resolved_concern_regex.match(line)
                     if not match:
