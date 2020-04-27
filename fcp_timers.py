@@ -95,8 +95,15 @@ class FCPTimers(object):
         with self.store.conn:
             self.store.cur.execute("""
             INSERT INTO fcp_timers (proposal_num, end_timestamp)
-            VALUES (%s, %s)
-            """, (proposal_num, timestamp.timestamp()))
+                VALUES (%s, %s)
+            ON CONFLICT (proposal_num)
+            DO UPDATE
+                SET end_timestamp = %s
+                WHERE fcp_timers.proposal_num = %s
+            """, (
+                proposal_num, timestamp.timestamp(),
+                proposal_num, timestamp.timestamp(),
+            ))
 
     def _db_delete_timer(self, proposal_num: int):
         """Deletes a timer from the database"""
