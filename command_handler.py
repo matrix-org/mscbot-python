@@ -43,8 +43,8 @@ class CommandHandler(object):
         self.proposal = None
         self.comment = None
         self.proposal_labels_str = []
-        self.team_vote_regex = re.compile(r"^- \[x\] @(.+)$", re.IGNORECASE)
-        self.resolved_concern_regex = re.compile(r"^\* ~~(.+)~~.*")
+        self.team_vote_regex = re.compile(r"^[*|-] \[x\] @(.+)$", re.IGNORECASE)
+        self.resolved_concern_regex = re.compile(r"^[*|-] ~~(.+)~~.*")
 
         # Set up FCP timer handler, and callback functions
         self.fcp_timers = FCPTimers(
@@ -52,6 +52,9 @@ class CommandHandler(object):
         )
 
     def handle_comment(self, comment: Dict):
+        # Replace any instances of \r\n with just \n
+        comment["comment"]["body"] = comment["comment"]["body"].replace("\r\n", "\n")
+
         # Check for any commands
         commands = self.parse_commands_from_text(comment["comment"]["body"])
 
