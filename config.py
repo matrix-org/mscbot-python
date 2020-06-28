@@ -84,25 +84,36 @@ class Config(object):
 
         # Github labels
         self.github_proposal_label = self._get_config_item(
-            ["github", "labels", "proposal"]
+            ["github", "labels", "proposal"],
+            default="proposal",
         )
         self.github_fcp_label = self._get_config_item(
-            ["github", "labels", "fcp"]
+            ["github", "labels", "fcp"],
+            default="final-comment-period",
         )
         self.github_fcp_proposed_label = self._get_config_item(
-            ["github", "labels", "fcp_proposed"]
+            ["github", "labels", "fcp_proposed"],
+            default="proposal-final-comment-period",
+        )
+        self.github_fcp_proposal_in_review_label = self._get_config_item(
+            ["github", "labels", "fcp_proposal_in_review"],
+            default="proposal-in-review",
         )
         self.github_fcp_finished_label = self._get_config_item(
-            ["github", "labels", "fcp_finished"]
+            ["github", "labels", "fcp_finished"],
+            default="finished-final-comment-period",
         )
         self.github_disposition_merge_label = self._get_config_item(
-            ["github", "labels", "disposition_merge"]
+            ["github", "labels", "disposition_merge"],
+            default="disposition-merge",
         )
         self.github_disposition_close_label = self._get_config_item(
-            ["github", "labels", "disposition_close"]
+            ["github", "labels", "disposition_close"],
+            default = "disposition-close",
         )
         self.github_disposition_postpone_label = self._get_config_item(
-            ["github", "labels", "disposition_postpone"]
+            ["github", "labels", "disposition_postpone"],
+            default = "disposition-postpone",
         )
 
         self.github_fcp_proposal_template_path = self._get_config_item(
@@ -114,7 +125,7 @@ class Config(object):
 
         # FCP information
         self.fcp_time_days = self._get_config_item(["fcp", "time_days"], required=False)
-        self.fcp_required_team_vote_ratio= self._get_config_item(
+        self.fcp_required_team_vote_ratio = self._get_config_item(
             ["fcp", "required_team_vote_ratio"]
         )
 
@@ -147,7 +158,7 @@ class Config(object):
         for name in path:
             config_dict = config_dict.get(name)
             if not config_dict:
-                if required:
+                if required and not default:
                     raise ConfigError(f"Config option {path_str} is required")
                 else:
                     config_dict = {}

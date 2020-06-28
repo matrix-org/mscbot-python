@@ -4,17 +4,19 @@ github:
   labels:
     # Denotes an issue/pr as a proposal
     proposal: proposal
-    # The label that denotes an issue/pr as in fcp
+    # The label that denotes a proposal is in review
+    proposal_in_review: proposal-in-review
+    # The label that denotes a proposal is in fcp
     fcp: final-comment-period
-    # Denotes an issue/pr as fcp proposed
+    # Denotes an proposal as fcp proposed
     fcp_proposed: proposed-final-comment-period
-    # Denotes an issue/pr as fcp finished
+    # Denotes an proposal as fcp finished
     fcp_finished: finished-final-comment-period
-    # Denotes an issue/pr as fcp proposed with a disposition of merge
+    # Denotes an proposal as fcp proposed with a disposition of merge
     disposition_merge: disposition-merge
-    # Denotes an issue/pr as fcp proposed with a disposition of close
+    # Denotes an proposal as fcp proposed with a disposition of close
     disposition_close: disposition-close
-    # Denotes an issue/pr as fcp proposed with a disposition of postpone
+    # Denotes an proposal as fcp proposed with a disposition of postpone
     disposition_postpone: disposition-postpone
   # The label that denotes an issue/pr as a proposal
   repo: matrix-org/matrix-doc
