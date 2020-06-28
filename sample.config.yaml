@@ -18,7 +18,7 @@ github:
     disposition_close: disposition-close
     # Denotes an proposal as fcp proposed with a disposition of postpone
     disposition_postpone: disposition-postpone
-  # The label that denotes an issue/pr as a proposal
+  # The repository where proposals are stored
   repo: matrix-org/matrix-doc
   # Organization containing the proposal team
   org: matrix-org
