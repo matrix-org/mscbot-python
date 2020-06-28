@@ -54,14 +54,19 @@ class WebhookHandler(object):
         @webhook.hook("issue_comment")
         def on_issue_comment(data):
             log.debug(f"Got comment: {json.dumps(data, indent=4, sort_keys=True)}")
-            self._process_issue_comment(data)
+            self._process_comment(data)
+
+        @webhook.hook("pull_request_review_comment")
+        def on_pull_request_review_comment(data):
+            log.debug(f"Got PR review comment: {json.dumps(data, indent=4, sort_keys=True)}")
+            self._process_comment(data)
 
     def run(self):
         from waitress import serve
         serve(self.app, host=self.config.webhook_host, port=self.config.webhook_port)
 
-    def _process_issue_comment(self, comment: Dict):
-        log.debug("Processing issue comment: %s", comment)
+    def _process_comment(self, comment: Dict):
+        log.debug("Processing comment: %s", comment)
 
         comment_author = comment["sender"]
         comment_author_login = comment_author["login"]
