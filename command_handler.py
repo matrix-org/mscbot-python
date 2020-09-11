@@ -42,6 +42,7 @@ class CommandHandler(object):
         )
         self.proposal = None
         self.comment = None
+        self.comment_link = None
         self.proposal_labels_str = []
         self.team_vote_regex = re.compile(r"^[*|-] \[x\] @(.+)$", re.IGNORECASE)
         self.resolved_concern_regex = re.compile(r"^[*|-] ~~(.+)~~.*")
@@ -64,6 +65,7 @@ class CommandHandler(object):
         original_labels = self.proposal_labels_str.copy()
 
         self.comment = comment
+        self.comment_link = comment["comment"]["html_url"]
 
         # Check if this is a new comment or an edit
         comment_body = self.comment["comment"]["body"]
@@ -493,20 +495,46 @@ class CommandHandler(object):
 
     def _cancel_fcp(self):
         """Cancel FCP"""
-        log.debug("Cancelling FCP...")
+        if self.config.github_fcp_proposed_label in self.proposal_labels_str:
+            log.debug("Cancelling FCP proposal...")
 
-        if self.config.github_fcp_label not in self.proposal_labels_str:
-            self._post_comment("This proposal is not in FCP.")
-            return
+            # Remove the FCP proposed label if present
+            if self.config.github_fcp_proposed_label in self.proposal_labels_str:
+                self.proposal_labels_str.remove(self.config.github_fcp_proposed_label)
 
-        # Remove the FCP label if present
-        if self.config.github_fcp_label in self.proposal_labels_str:
-            self.proposal_labels_str.remove(self.config.github_fcp_label)
+            # Place a note on the current status comment declaring FCP proposal has been
+            # cancelled
+            status_comment = self._get_status_comment()
+            if not status_comment:
+                log.warning(
+                    "Unable to find status comment of %s while cancelling an FCP proposal."
+                    % (self.proposal.number,)
+                )
 
-        # Remove the FCP timer
-        self.fcp_timers.cancel_timer_for_proposal_num(self.proposal.number)
+            prepend_text = (
+                "**This FCP proposal has been cancelled by %s.**"
+                % (self.comment_link,)
+            )
 
-        self._post_comment("Final comment period for this proposal has been cancelled.")
+            self._post_or_update_status_comment(
+                existing_status_comment=status_comment,
+                text_to_prepend=prepend_text,
+            )
+
+        elif self.config.github_fcp_label in self.proposal_labels_str:
+            log.debug("Cancelling FCP...")
+
+            # Remove the FCP label if present
+            if self.config.github_fcp_label in self.proposal_labels_str:
+                self.proposal_labels_str.remove(self.config.github_fcp_label)
+
+            # Remove the FCP timer
+            self.fcp_timers.cancel_timer_for_proposal_num(self.proposal.number)
+
+            self._post_comment("Final comment period for this proposal has been cancelled.")
+
+        else:
+            self._post_comment("This proposal is not in FCP nor has had FCP proposed.")
 
     def _post_or_update_status_comment(
         self,
@@ -514,6 +542,7 @@ class CommandHandler(object):
         concerns: List[Tuple[str, bool]] = None,
         disposition: str = None,
         existing_status_comment: IssueComment = None,
+        text_to_prepend: str = None,
     ):
         """Post or edit an existing status comment on a proposal
 
@@ -522,6 +551,10 @@ class CommandHandler(object):
             concerns: A list of concern tuples, with concern_text, resolved
             existing_status_comment: If set, will edit this status comment instead of
                 posting a new one
+            text_to_prepend: If set, this text will be prepended to the status comment.
+                Note that this will effectively render the comment as no longer
+                detectable as a status comment, as the comment will not start with
+                "Team member @... has proposed ..."
         """
         if (
                 (voted_members is None or concerns is None or disposition is None) and
@@ -563,6 +596,9 @@ class CommandHandler(object):
             team_votes=team_votes,
             concerns=concerns,
         )
+
+        if text_to_prepend:
+            comment_text = text_to_prepend + comment_text
 
         log.debug("Posting/updating status comment: %s", comment_text)
 
