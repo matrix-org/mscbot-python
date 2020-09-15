@@ -371,8 +371,8 @@ class CommandHandler(object):
             self.proposal_labels_str.remove(self.config.github_fcp_proposed_label)
 
         # Remove the proposal in review label if present
-        if self.config.github_proposal_in_review_label in self.proposal_labels_str:
-            self.proposal_labels_str.remove(self.config.github_proposal_in_review_label)
+        if self.config.github_fcp_proposal_in_review_label in self.proposal_labels_str:
+            self.proposal_labels_str.remove(self.config.github_fcp_proposal_in_review_label)
 
     def _get_status_comment(self) -> Optional[IssueComment]:
         """Retrieves an existing status comment for a proposal
