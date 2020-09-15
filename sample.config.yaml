@@ -1,5 +1,6 @@
 github:
-  # Your github access token
+  # Your github access token. Create one at https://github.com/settings/tokens
+  # Needs repo:public_repo and admin:org:read:org permissions
   access_token: 1234567890abcdefghijklmnopqrstuvwxyz
   labels:
     # Denotes an issue/pr as a proposal

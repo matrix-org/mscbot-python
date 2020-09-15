@@ -61,7 +61,7 @@ On github:
 1. Add a new webhook, point it to a URL that the bot can be accessed at
 1. Set the content type to `application/json`
 1. Come up with and set a secret (hint: use the `uuid` terminal command)
-1. Under events, select "Let me select individual events". And check the following:
+1. Under events, select "Let me select individual events". Only the following need to be checked:
     - Issue comments
     - Pull request review comments
 
