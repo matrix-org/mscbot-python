@@ -121,13 +121,6 @@ class CommandHandler(object):
         disposition = parameters.pop(0)
 
         if disposition == "cancel":
-            # Check that this proposal is in FCP
-            if self.config.github_fcp_label not in self.proposal_labels_str:
-                self._post_comment(
-                    "This proposal is not in FCP."
-                )
-                return
-
             self._cancel_fcp()
             return
 
@@ -512,7 +505,7 @@ class CommandHandler(object):
                 )
 
             prepend_text = (
-                "**This FCP proposal has been cancelled by %s.**"
+                "**This FCP proposal has been cancelled by %s.**\n\n"
                 % (self.comment_link,)
             )
 
