@@ -76,8 +76,11 @@ class WebhookHandler(object):
             log.debug("Ignoring comment from ourselves")
             return
 
-        # Is this a proposal?
-        if not self._issue_has_label(comment["issue"], self.config.github_proposal_label):
+        # Account for issue and pull request review comments
+        issue = comment["issue"] if "issue" in comment else comment["pull_request"]
+
+        # Check if this is a proposal
+        if not self._issue_has_label(issue, self.config.github_proposal_label):
             log.debug("Ignoring comment without appropriate proposal label")
             return
 

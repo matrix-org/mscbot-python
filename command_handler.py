@@ -60,8 +60,10 @@ class CommandHandler(object):
         commands = self.parse_commands_from_text(comment["comment"]["body"])
 
         # Retrieve the issue this comment is attached to
-        self.proposal = self.repo.get_issue(comment["issue"]["number"])
-        self.proposal_labels_str = [label["name"] for label in comment["issue"]["labels"]]
+        # Account for issue and pull request review comments
+        issue = comment["issue"] if "issue" in comment else comment["pull_request"]
+        self.proposal = self.repo.get_issue(issue["number"])
+        self.proposal_labels_str = [label["name"] for label in issue["labels"]]
         original_labels = self.proposal_labels_str.copy()
 
         self.comment = comment
