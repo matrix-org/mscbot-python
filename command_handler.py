@@ -551,8 +551,14 @@ class CommandHandler(object):
         # Format concerns
         concerns = self._format_concerns(concerns)
 
+        # Set author for status comment. Use author of original comment if this is an update
+        if existing_status_comment:
+            author = existing_status_comment.user.login
+        else:
+            author = self.comment["sender"]["login"]
+
         comment_text = self.github_fcp_proposal_template.render(
-            comment_author=self.comment["sender"]["login"],
+            comment_author=author,
             disposition=disposition,
             team_votes=team_votes,
             concerns=concerns,
