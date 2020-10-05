@@ -272,10 +272,6 @@ class CommandHandler(object):
                                "cancel the current one first.")
             return
 
-        # Remove finished FCP label if present
-        if self.config.github_fcp_finished_label in self.proposal_labels_str:
-            self.proposal_labels_str.remove(self.config.github_fcp_finished_label)
-
         # Post new status comment
         self._post_or_update_status_comment(
             voted_members=[self.comment["sender"]["login"]],
@@ -283,7 +279,7 @@ class CommandHandler(object):
             disposition=disposition,
         )
 
-        # Add the relevant label
+        # Add the relevant disposition label
         if disposition == "merge":
             self.proposal_labels_str.append(self.config.github_disposition_merge_label)
         elif disposition == "postpone":
@@ -293,6 +289,14 @@ class CommandHandler(object):
 
         # Add the proposal label
         self.proposal_labels_str.append(self.config.github_fcp_proposed_label)
+
+        # Remove proposal in review label if present
+        if self.config.github_fcp_proposal_in_review_label in self.proposal_labels_str:
+            self.proposal_labels_str.remove(self.config.github_fcp_proposal_in_review_label)
+
+        # Remove finished FCP label if present
+        if self.config.github_fcp_finished_label in self.proposal_labels_str:
+            self.proposal_labels_str.remove(self.config.github_fcp_finished_label)
 
     def _process_status_comment_update_with_body(self, status_comment_body: str):
         """Process an edit on a status comment. Checks to see if the required
@@ -531,6 +535,17 @@ class CommandHandler(object):
         else:
             self._post_comment("This proposal is not in FCP nor has had FCP proposed.")
 
+        # Remove any disposition labels if present
+        if self.config.github_disposition_close_label in self.proposal_labels_str:
+            self.proposal_labels_str.remove(self.config.github_disposition_close_label)
+        if self.config.github_disposition_merge_label in self.proposal_labels_str:
+            self.proposal_labels_str.remove(self.config.github_disposition_merge_label)
+        if self.config.github_disposition_postpone_label in self.proposal_labels_str:
+            self.proposal_labels_str.remove(self.config.github_disposition_postpone_label)
+
+        # Add the proposal in review label back again
+        self.proposal_labels_str.append(self.config.github_fcp_proposal_in_review_label)
+
     def _post_or_update_status_comment(
         self,
         voted_members: List[str] = None,
@@ -552,8 +567,8 @@ class CommandHandler(object):
                 "Team member @... has proposed ..."
         """
         if (
-                (voted_members is None or concerns is None or disposition is None) and
-                existing_status_comment is None
+            (voted_members is None or concerns is None or disposition is None) and
+            existing_status_comment is None
         ):
             log.error("Attempted to auto-retrieve status comment values without providing"
                       "a status comment. Proposal num: #%d", self.proposal.number)
