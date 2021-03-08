@@ -185,12 +185,6 @@ class CommandHandler(object):
         concern_text = " ".join(parameters)
         self._add_concern_to_status_comment(status_comment, concern_text)
 
-        # Add the concern label if it doesn't already exist
-        if self.config.github_unresolved_concerns_label not in self.proposal_labels_str:
-            self.proposal_labels_str.append(
-                self.config.github_unresolved_concerns_label
-            )
-
     def _command_resolve(self, parameters: List[str]):
         """Resolve an existing concern on an in-FCP proposal"""
         # Get the existing status comment
@@ -230,6 +224,12 @@ class CommandHandler(object):
         self._post_or_update_status_comment(
             concerns=concerns, existing_status_comment=status_comment
         )
+
+        # Add the concern label if it doesn't already exist
+        if self.config.github_unresolved_concerns_label not in self.proposal_labels_str:
+            self.proposal_labels_str.append(
+                self.config.github_unresolved_concerns_label
+            )
 
     def _resolve_concern_on_status_comment(
         self,
