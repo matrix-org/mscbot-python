@@ -204,9 +204,6 @@ class CommandHandler(object):
         # Update status comment body, and check if this allows an FCP to occur
         self._process_status_comment_update_with_body(status_comment.body)
 
-        # Update labels
-        self.proposal.set_labels(*self.proposal_labels_str)
-
     def _add_concern_to_status_comment(
         self,
         status_comment: IssueComment,
