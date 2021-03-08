@@ -109,11 +109,15 @@ class Config(object):
         )
         self.github_disposition_close_label = self._get_config_item(
             ["github", "labels", "disposition_close"],
-            default = "disposition-close",
+            default="disposition-close",
         )
         self.github_disposition_postpone_label = self._get_config_item(
             ["github", "labels", "disposition_postpone"],
-            default = "disposition-postpone",
+            default="disposition-postpone",
+        )
+        self.github_unresolved_concerns_label = self._get_config_item(
+            ["github", "labels", "unresolved-concerns"],
+            default="unresolved-concerns",
         )
 
         self.github_fcp_proposal_template_path = self._get_config_item(
