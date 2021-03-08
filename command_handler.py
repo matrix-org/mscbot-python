@@ -214,7 +214,7 @@ class CommandHandler(object):
         # Check that this concern hasn't already been raised
         for text, resolved in concerns:
             if concern_text == text:
-                self._post_comment("That concern has already been raised")
+                self._post_comment("That concern has already been raised.")
                 return
 
         # Add this concern as unresolved
