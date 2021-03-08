@@ -306,7 +306,9 @@ class CommandHandler(object):
 
         # Remove proposal in review label if present
         if self.config.github_fcp_proposal_in_review_label in self.proposal_labels_str:
-            self.proposal_labels_str.remove(self.config.github_fcp_proposal_in_review_label)
+            self.proposal_labels_str.remove(
+                self.config.github_fcp_proposal_in_review_label
+            )
 
         # Remove finished FCP label if present
         if self.config.github_fcp_finished_label in self.proposal_labels_str:
@@ -550,7 +552,9 @@ class CommandHandler(object):
         if self.config.github_disposition_merge_label in self.proposal_labels_str:
             self.proposal_labels_str.remove(self.config.github_disposition_merge_label)
         if self.config.github_disposition_postpone_label in self.proposal_labels_str:
-            self.proposal_labels_str.remove(self.config.github_disposition_postpone_label)
+            self.proposal_labels_str.remove(
+                self.config.github_disposition_postpone_label
+            )
 
         # Add the proposal in review label back again
         self.proposal_labels_str.append(self.config.github_fcp_proposal_in_review_label)
