@@ -13,14 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
 import argparse
+import logging
+
+from github import Github
+from github.GithubException import UnknownObjectException
 
 from config import Config
 from storage import Storage
 from webhook import WebhookHandler
-from github import Github
-from github.GithubException import UnknownObjectException
 
 log = logging.getLogger(__name__)
 
@@ -29,11 +30,8 @@ def main():
     # Set up cmdline argument parsing
     parser = argparse.ArgumentParser(description="Proposal processing bot.")
     parser.add_argument(
-        "-c",
-        "--config",
-        type=str,
-        default="config.yaml",
-        help="Path to a config file")
+        "-c", "--config", type=str, default="config.yaml", help="Path to a config file"
+    )
     cmdline_args = parser.parse_args()
 
     # Read the config file
@@ -60,6 +58,8 @@ def main():
         log.fatal("Unable to download our own github user information")
         return
 
+    log.info("Successfully logged in as %s!", config.github_user.login)
+
     # Get the proposal team object
     try:
         config.github_org = github.get_organization(config.github_org_name)
@@ -70,9 +70,11 @@ def main():
     try:
         config.github_team = config.github_org.get_team_by_slug(config.github_team_name)
     except UnknownObjectException:
-        log.fatal(f"Unable to find or access Github team '{config.github_team_name}'. "
-                  f"Make sure your bot is part of the team and has the read:org "
-                  f"permission")
+        log.fatal(
+            f"Unable to find or access Github team '{config.github_team_name}'. "
+            f"Make sure your bot is part of the team and has the read:org "
+            f"permission"
+        )
         return
 
     # Create a webhook handler

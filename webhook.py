@@ -11,16 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import logging
 import json
+import logging
 from typing import Dict
+
+from flask import Flask
 from github import Github
 from github.Repository import Repository
+from github_webhook import Webhook
+
+from command_handler import CommandHandler
 from config import Config
 from storage import Storage
-from command_handler import CommandHandler
-from github_webhook import Webhook
-from flask import Flask
 
 log = logging.getLogger(__name__)
 
@@ -58,11 +60,14 @@ class WebhookHandler(object):
 
         @webhook.hook("pull_request_review_comment")
         def on_pull_request_review_comment(data):
-            log.debug(f"Got PR review comment: {json.dumps(data, indent=4, sort_keys=True)}")
+            log.debug(
+                f"Got PR review comment: {json.dumps(data, indent=4, sort_keys=True)}"
+            )
             self._process_comment(data)
 
     def run(self):
         from waitress import serve
+
         serve(self.app, host=self.config.webhook_host, port=self.config.webhook_port)
 
     def _process_comment(self, comment: Dict):

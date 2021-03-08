@@ -12,8 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import psycopg2
 import logging
+
+import psycopg2
 
 latest_db_version = 0
 
@@ -55,30 +56,38 @@ class Storage(object):
         # Migrations table #
 
         # Holds information about database migrations
-        self.cur.execute("""
+        self.cur.execute(
+            """
             CREATE TABLE migrations (
                 current INTEGER PRIMARY KEY
             )
-        """)
+        """
+        )
 
         # Initial migration version
-        self.cur.execute("""
+        self.cur.execute(
+            """
             INSERT INTO migrations
             (current)
             VALUES (0)
-        """)
+        """
+        )
 
         # FCP timers table #
 
-        self.cur.execute("""
+        self.cur.execute(
+            """
             CREATE TABLE fcp_timers (
                 proposal_num INTEGER PRIMARY KEY,
                 end_timestamp INTEGER NOT NULL
             )
-        """)
+        """
+        )
 
-        self.cur.execute("""
+        self.cur.execute(
+            """
             CREATE UNIQUE INDEX fcp_timers_proposal_num ON fcp_timers (proposal_num)
-        """)
+        """
+        )
 
         log.info("Database setup complete")

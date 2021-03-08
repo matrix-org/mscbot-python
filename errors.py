@@ -19,6 +19,7 @@ class ConfigError(RuntimeError):
     Args:
         msg (str): The message displayed on error
     """
+
     def __init__(self, msg):
         super(ConfigError, self).__init__("%s" % (msg,))
 
@@ -30,5 +31,6 @@ class ProposalNotInFCP(RuntimeError):
     Args:
         msg (str): The message displayed on error
     """
+
     def __init__(self, msg):
         super(ProposalNotInFCP, self).__init__("%s" % (msg,))

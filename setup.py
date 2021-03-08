@@ -16,7 +16,6 @@
 
 from setuptools import setup
 
-
 setup(
     name="mscbot",
     version="0.1.6",
@@ -32,7 +31,7 @@ setup(
         "psycopg2-binary>=2.8.4",
     ],
     classifiers=[
-        'License :: OSI Approved :: Apache Software License',
-        'Programming Language :: Python :: 3',
+        "License :: OSI Approved :: Apache Software License",
+        "Programming Language :: Python :: 3",
     ],
 )

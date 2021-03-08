@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
+from datetime import datetime
+
+from apscheduler.job import Job
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.date import DateTrigger
-from apscheduler.job import Job
-from storage import Storage
-from datetime import datetime
+
 from errors import ProposalNotInFCP
+from storage import Storage
 
 log = logging.getLogger(__name__)
 
@@ -49,8 +51,9 @@ class FCPTimers(object):
     def new_timer(self, run_time: datetime, proposal_num: int, save=True):
         """Start a new timer. Saves the timer to the db if `save` is True"""
         # Schedule a new job
-        job = self.scheduler.add_job(self._run_callback, DateTrigger(run_time),
-                                     args=[proposal_num])
+        job = self.scheduler.add_job(
+            self._run_callback, DateTrigger(run_time), args=[proposal_num]
+        )
 
         # Record the timer's job ID along with the proposal number
         self.timers[proposal_num] = job
@@ -93,25 +96,29 @@ class FCPTimers(object):
     def _db_save_timer(self, timestamp: datetime, proposal_num: int):
         """Saves a timer to the database"""
         with self.store.conn:
-            self.store.cur.execute("""
+            self.store.cur.execute(
+                """
             INSERT INTO fcp_timers (proposal_num, end_timestamp)
                 VALUES (%s, %s)
             ON CONFLICT (proposal_num)
             DO UPDATE
                 SET end_timestamp = %s
                 WHERE fcp_timers.proposal_num = %s
-            """, (
-                proposal_num, timestamp.timestamp(),
-                proposal_num, timestamp.timestamp(),
-            ))
+            """,
+                (
+                    proposal_num,
+                    timestamp.timestamp(),
+                    proposal_num,
+                    timestamp.timestamp(),
+                ),
+            )
 
     def _db_delete_timer(self, proposal_num: int):
         """Deletes a timer from the database"""
         with self.store.conn:
             log.info("DELETING %s", proposal_num)
             self.store.cur.execute(
-                "DELETE FROM fcp_timers WHERE proposal_num = %s",
-                (proposal_num,)
+                "DELETE FROM fcp_timers WHERE proposal_num = %s", (proposal_num,)
             )
 
     def _run_callback(self, proposal_num: int):

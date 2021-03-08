@@ -15,12 +15,14 @@
 
 import logging
 import os
-import yaml
 import sys
-from typing import Optional, Any, List
-from errors import ConfigError
-from github.Team import Team
+from typing import Any, List, Optional
+
+import yaml
 from github.Organization import Organization
+from github.Team import Team
+
+from errors import ConfigError
 
 log = logging.getLogger()
 
@@ -43,7 +45,7 @@ class Config(object):
 
         # Logging setup
         formatter = logging.Formatter(
-            '%(asctime)s | %(name)s [%(levelname)s] %(message)s'
+            "%(asctime)s | %(name)s [%(levelname)s] %(message)s"
         )
 
         log_level = self._get_config_item(["logging", "level"], "INFO")
@@ -69,16 +71,12 @@ class Config(object):
             log.addHandler(handler)
 
         # Database setup
-        self.database_path = self._get_config_item(
-            ["database", "path"]
-        )
+        self.database_path = self._get_config_item(["database", "path"])
 
         # Github setup
         self.github_user = None  # Set later once we connect to github successfully
 
-        self.github_access_token = self._get_config_item(
-            ["github", "access_token"]
-        )
+        self.github_access_token = self._get_config_item(["github", "access_token"])
 
         self.github_repo = self._get_config_item(["github", "repo"])
 
@@ -140,10 +138,10 @@ class Config(object):
         self.webhook_secret = self._get_config_item(["webhook", "secret"])
 
     def _get_config_item(
-            self,
-            path: List[str],
-            default: Any = None,
-            required: bool = True,
+        self,
+        path: List[str],
+        default: Any = None,
+        required: bool = True,
     ) -> Any:
         """Get a config option from a path and option name, specifying whether it is
         required.
@@ -154,7 +152,7 @@ class Config(object):
         """
         option_name = path.pop(-1)
 
-        path_str = '.'.join(path)
+        path_str = ".".join(path)
 
         # Sift through the config dicts specified by `path` to get the one containing
         # our option
@@ -173,4 +171,3 @@ class Config(object):
             raise ConfigError(f"Config option {path_str+'.'+option_name} is required")
 
         return option
-
