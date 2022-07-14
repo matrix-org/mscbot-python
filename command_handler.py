@@ -368,7 +368,8 @@ class CommandHandler(object):
         comment_text = (
             f":bell: This is now entering its final comment period, "
             f"as per [the review]({status_comment.html_url}) above. :bell:"
-            f"\n\nThe final comment period will end at {fcp_conclusion_time.isoformat()}."
+            f"\n\nThe final comment period will run for {self.config.fcp_time_days} "
+            f"days until {fcp_conclusion_time.isoformat()}."
         )
 
         # Post a comment stating that FCP has begun
