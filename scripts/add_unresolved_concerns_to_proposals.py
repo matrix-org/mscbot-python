@@ -83,7 +83,7 @@ def _parse_concerns_from_status_comment_body(
 
 def main():
     github_access_token = ""
-    github_repo = "matrix-org/matrix-doc"
+    github_repo = "matrix-org/matrix-spec-proposals"
 
     # Log into github with provided access token
     github = Github(github_access_token)

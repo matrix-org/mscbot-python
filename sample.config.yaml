@@ -22,7 +22,7 @@ github:
     # Denotes a proposal current has outstanding concerns
     unresolved_concerns: unresolved-concerns
   # The repository where proposals are stored
-  repo: matrix-org/matrix-doc
+  repo: matrix-org/matrix-spec-proposals
   # Organization containing the proposal team
   org: matrix-org
   # Team name whose members have the power to influence proposals
