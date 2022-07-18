@@ -30,6 +30,14 @@ setup(
         "APScheduler>=3.6.3",
         "psycopg2-binary>=2.8.4",
     ],
+    extras_require={
+        'dev': [
+            "isort==5.7.0",
+            "flake8==3.8.4",
+            "flake8-comprehensions==3.3.1",
+            "black==22.3.0",
+        ]
+    },
     classifiers=[
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 3",
