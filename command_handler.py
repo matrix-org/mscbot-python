@@ -13,7 +13,7 @@
 # limitations under the License.
 import logging
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Tuple
 
 from github.IssueComment import IssueComment
@@ -356,7 +356,7 @@ class CommandHandler(object):
 
         # Calculate when this FCP should conclude
         fcp_conclusion_time = (
-            datetime.now()
+            datetime.now(timezone.utc)
             + timedelta(days=self.config.fcp_time_days)
             + timedelta(seconds=10)
         )
@@ -365,9 +365,12 @@ class CommandHandler(object):
         # Link to the status comment
         status_comment = self._get_status_comment()
 
+        # The conclusion time is formatted as July 14, 2022 at 14:34:14 UTC.
         comment_text = (
             f":bell: This is now entering its final comment period, "
             f"as per [the review]({status_comment.html_url}) above. :bell:"
+            f"\n\nThe final comment period will run for {self.config.fcp_time_days} "
+            f"days until {fcp_conclusion_time.strftime('%B %-d, %Y at %H:%M:%S %Z')}."
         )
 
         # Post a comment stating that FCP has begun
