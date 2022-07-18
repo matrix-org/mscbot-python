@@ -19,8 +19,8 @@ git clone https://github.com/matrix-org/mscbot-python && cd mscbot-python
 Create a virtual environment and activate it:
 
 ```
-virtualenv -p python3 env
-source env/bin/activate
+virtualenv -p python3 venv
+source venv/bin/activate
 ```
 
 Install packages:
@@ -77,7 +77,7 @@ Edit the config file and
 Activate the virtualenv and start mscbot:
 
 ```
-source env/bin/activate
+source venv/bin/activate
 python -m mscbot
 ```
 
@@ -117,3 +117,23 @@ docker run -v /path/to/config/dir:/config matrixdotorg/mscbot-python python -m m
 ## User guide
 
 See [docs/user_guide.md](docs/user_guide.md).
+
+## Development
+
+Several python dependencies are necessary to support development scripts. They can be installed by running:
+
+```
+# Activate your python environment
+source venv/bin/activate
+
+# Install development dependencies in editable mode
+pip install -e ".[dev]"
+```
+
+### Code linting
+
+Before submitting a PR, make sure to lint your code:
+
+```
+./scripts-dev/lint.sh
+```
