@@ -19,7 +19,7 @@ git clone https://github.com/matrix-org/mscbot-python && cd mscbot-python
 Create a virtual environment and activate it:
 
 ```
-virtualenv -p python3 venv
+python -m venv venv
 source venv/bin/activate
 ```
 
