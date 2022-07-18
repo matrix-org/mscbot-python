@@ -31,7 +31,7 @@ setup(
         "psycopg2-binary>=2.8.4",
     ],
     extras_require={
-        'dev': [
+        "dev": [
             "isort==5.7.0",
             "flake8==3.8.4",
             "flake8-comprehensions==3.3.1",
