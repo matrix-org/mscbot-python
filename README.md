@@ -63,6 +63,7 @@ On github:
 1. Come up with and set a secret (hint: use the `uuid` terminal command)
 1. Under events, select "Let me select individual events". Only the following need to be checked:
     - Issue comments
+    - Pull request reviews
     - Pull request review comments
 
 On your server:
