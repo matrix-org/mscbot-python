@@ -15,7 +15,7 @@ import json
 import logging
 from typing import Dict
 
-from flask import Flask
+from flask import Flask, request
 from github import Github
 from github.Repository import Repository
 from github_webhook import Webhook
@@ -40,7 +40,7 @@ class WebhookHandler(object):
         self.repo = repo
         self.command_handler = CommandHandler(config, store, repo)
 
-        # Start a flash webserver
+        # Start a flask webserver
         self.app = Flask(__name__)
 
         webhook = Webhook(
@@ -49,9 +49,15 @@ class WebhookHandler(object):
             secret=self.config.webhook_secret,
         )
 
-        @self.app.route("/")
-        def hello_world():
-            return "Hello, world!"
+        @self.app.route("/<path:path>", methods=["GET", "POST"])
+        def invalid_path_route(path):
+            """Respond to a request on an unrecognised HTTP method + path combination."""
+            # We never expect a GET.
+            if request.method != "POST":
+                return "This application only responds to POST requests", 405
+
+            # The requester used a POST, but didn't use the configured webhook URL.
+            return "Did you forget to use the configured webhook path? :)", 404
 
         @webhook.hook("issue_comment")
         def on_issue_comment(data):
