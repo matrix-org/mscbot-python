@@ -53,12 +53,25 @@ class CommandHandler(object):
         # Set up FCP timer handler, and callback functions
         self.fcp_timers = FCPTimers(store, self._on_fcp_timer_fired)
 
-    def handle_comment(self, comment: Dict):
+    def handle_comment(self, comment: Dict) -> None:
+        # If this is a pull request review (not a comment or a comment in a review) then
+        # the field containing comment text etc. will be "review" instead of "comment"
+        if "comment" in comment:
+            comment_fields = comment["comment"]
+        elif "review" in comment:
+            comment_fields = comment["review"]
+        else:
+            log.debug("Unrecognised structure of comment. Ignoring.")
+            return
+
+        # Extract the comment's text
+        comment_text = comment_fields["body"]
+
         # Replace any instances of \r\n with just \n
-        comment["comment"]["body"] = comment["comment"]["body"].replace("\r\n", "\n")
+        comment_text = comment_text.replace("\r\n", "\n")
 
         # Check for any commands
-        commands = self.parse_commands_from_text(comment["comment"]["body"])
+        commands = self.parse_commands_from_text(comment_text)
 
         # Retrieve the issue this comment is attached to
         # Account for issue and pull request review comments
@@ -68,10 +81,9 @@ class CommandHandler(object):
         original_labels = self.proposal_labels_str.copy()
 
         self.comment = comment
-        self.comment_link = comment["comment"]["html_url"]
+        self.comment_link = comment_fields["html_url"]
 
         # Check if this is a new comment or an edit
-        comment_body = self.comment["comment"]["body"]
         if comment["action"] == "edited":
             # Check if this is an edit of a status comment
             known_status_comment = self._get_status_comment()
@@ -83,7 +95,7 @@ class CommandHandler(object):
                 return
 
             # Process status comment update
-            self._process_status_comment_update_with_body(comment_body)
+            self._process_status_comment_update_with_body(comment_text)
         else:
             # Run command functions
             for command in commands:

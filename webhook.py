@@ -58,6 +58,11 @@ class WebhookHandler(object):
             log.debug(f"Got comment: {json.dumps(data, indent=4, sort_keys=True)}")
             self._process_comment(data)
 
+        @webhook.hook("pull_request_review")
+        def on_pull_request_review(data):
+            log.debug(f"Got PR review: {json.dumps(data, indent=4, sort_keys=True)}")
+            self._process_comment(data)
+
         @webhook.hook("pull_request_review_comment")
         def on_pull_request_review_comment(data):
             log.debug(
