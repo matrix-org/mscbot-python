@@ -138,3 +138,7 @@ Before submitting a PR, make sure to lint your code:
 ```
 ./scripts-dev/lint.sh
 ```
+
+### Creating a new release
+
+See [RELEASING.md](RELEASING.md).
